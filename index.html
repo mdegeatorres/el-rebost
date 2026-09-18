@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="El Rebost">
+<title>El Rebost</title>
+<style>
+  :root{
+    --bg:#F2F5EA; --bg-alt:#E9EEDD; --surface:#FFFFFF; --surface-2:#F7F9F1;
+    --ink:#23301F; --ink-muted:#6E7864; --line:#D7DDC5;
+    --accent:#3F6B4A; --accent-ink:#FFFFFF; --accent-soft:#DCE8D9;
+    --spice:#B8721B; --spice-soft:#F3DDB0;
+    --danger:#B3492F; --danger-soft:#F3DBD2;
+    --radius:14px; --radius-sm:9px;
+    --shadow: 0 1px 2px rgba(35,48,31,0.07), 0 6px 16px rgba(35,48,31,0.07);
+    --font-display: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1A2420; --bg-alt:#202B25; --surface:#232F29; --surface-2:#1E2924;
+      --ink:#ECEFE2; --ink-muted:#9CA795; --line:#34423A;
+      --accent:#8FBB8E; --accent-ink:#122016; --accent-soft:#2C3B31;
+      --spice:#E8B45B; --spice-soft:#3A2E19;
+      --danger:#E08669; --danger-soft:#3A241D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.35);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important;} }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);}
+  body{min-height:100vh;overscroll-behavior-y:none;}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+  svg.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block;}
+  svg.ic-sm{width:17px;height:17px;}
+  svg.ic-lg{width:23px;height:23px;}
+
+  header.top{position:sticky;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 14px) 20px 12px;background:var(--bg);border-bottom:1px solid var(--line);}
+  header.top h1{font-family:var(--font-display);font-weight:500;font-style:italic;font-size:26px;margin:0 0 2px;}
+  header.top p{margin:0;color:var(--ink-muted);font-size:13.5px;}
+
+  main{flex:1;padding:16px 16px calc(96px + env(safe-area-inset-bottom));}
+  section.view{display:none;}
+  section.view.active{display:block;}
+
+  .empty{border:1px dashed var(--line);border-radius:var(--radius);padding:26px 20px;text-align:center;color:var(--ink-muted);font-size:14.5px;line-height:1.55;}
+  .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;}
+  .card.tight{padding:4px 12px;}
+
+  .group-title{font-family:var(--font-display);font-style:italic;font-size:17px;margin:20px 2px 8px;color:var(--ink);}
+  .group-title:first-child{margin-top:4px;}
+
+  .dish-row{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;}
+  .dish-row .name{font-size:16px;font-weight:600;}
+  .dish-row .meta{font-size:12.5px;color:var(--ink-muted);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:700;}
+  .icon-btn{border:none;background:transparent;color:var(--ink-muted);padding:7px;cursor:pointer;border-radius:8px;display:flex;align-items:center;}
+  .icon-btn:active{background:var(--bg-alt);}
+
+  .fab{position:fixed;right:calc(50% - 260px + 16px);bottom:calc(84px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);border:none;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:6;}
+  @media (max-width:552px){ .fab{right:16px;} }
+
+  button.primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:var(--radius-sm);padding:11px 16px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;justify-content:center;gap:7px;}
+  button.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 15px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;justify-content:center;gap:7px;}
+  button.danger{background:var(--danger-soft);color:var(--danger);border:none;border-radius:var(--radius-sm);padding:10px 15px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .row-actions{display:flex;gap:8px;margin-top:12px;}
+
+  .day-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 14px 12px;margin-bottom:9px;}
+  .day-card h3{font-size:12.5px;font-weight:700;letter-spacing:0.3px;color:var(--accent);margin:0 0 6px;}
+  .slot{display:flex;align-items:center;gap:9px;padding:6px 0;}
+  .slot .lbl{width:52px;flex-shrink:0;font-size:12.5px;color:var(--ink-muted);font-weight:600;}
+  .slot select{flex:1;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:14px;font-family:var(--font-body);min-width:0;}
+  .slot.flash select{background:var(--spice-soft);transition:background 0.7s ease;}
+  .slot .reroll{background:none;border:none;color:var(--ink-muted);cursor:pointer;padding:5px;flex-shrink:0;display:flex;}
+
+  .item-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .item-row:last-child{border-bottom:none;}
+  .checkbox{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);}
+  .item-row.on .checkbox{background:var(--accent);border-color:var(--accent);}
+  .item-row .label{font-size:15px;flex:1;}
+  .item-row.on .label{color:var(--ink-muted);text-decoration:line-through;text-decoration-color:var(--ink-muted);}
+  .item-row .src{font-size:11.5px;color:var(--ink-muted);}
+
+  .shop-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .shop-progress .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .shop-progress .bar > div{height:100%;background:var(--accent);transition:width 0.3s ease;}
+  .shop-progress .count{font-size:12.5px;color:var(--ink-muted);white-space:nowrap;}
+
+  .add-inline{display:flex;gap:8px;margin:8px 0 4px;}
+  .add-inline input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;font-size:14.5px;color:var(--ink);font-family:var(--font-body);min-width:0;}
+  .add-inline button{background:var(--accent);color:var(--accent-ink);border:none;border-radius:var(--radius-sm);width:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;}
+  nav.tabs button{flex:1;background:none;border:none;font-family:var(--font-body);color:var(--ink-muted);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;padding:4px 0;cursor:pointer;position:relative;}
+  nav.tabs button.active{color:var(--accent);font-weight:700;}
+  nav.tabs .badge{position:absolute;top:-1px;right:calc(50% - 20px);background:var(--spice);color:#fff;border-radius:99px;font-size:9.5px;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(20,26,18,0.4);z-index:10;display:none;}
+  .sheet-backdrop.open{display:block;}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -8px 28px rgba(0,0,0,0.25);z-index:11;transform:translateY(105%);transition:transform 0.28s cubic-bezier(.32,.72,0,1);max-height:88vh;display:flex;flex-direction:column;}
+  .sheet-backdrop.open .sheet{transform:translateY(0);}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 8px;flex-shrink:0;}
+  .sheet-head h2{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:20px;margin:0;}
+  .sheet-body{padding:4px 18px 18px;overflow-y:auto;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--ink-muted);margin-bottom:6px;font-weight:600;}
+  .field input, .field textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;color:var(--ink);font-family:var(--font-body);}
+  .field textarea{min-height:120px;resize:vertical;line-height:1.5;}
+  .field .hint{font-size:12px;color:var(--ink-muted);margin-top:6px;line-height:1.45;}
+  .chips{display:flex;gap:8px;}
+  .chip{flex:1;text-align:center;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-muted);border-radius:var(--radius-sm);padding:10px;font-size:14px;font-weight:600;cursor:pointer;}
+  .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+
+  .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:13.5px;opacity:0;transition:opacity 0.25s, transform 0.25s;z-index:20;max-width:82%;text-align:center;pointer-events:none;}
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <h1>El Rebost</h1>
+    <p id="subtitle"></p>
+  </header>
+
+  <main>
+    <section class="view active" id="view-dishes"><div id="dishList"></div></section>
+
+    <section class="view" id="view-menu">
+      <div id="weekList"></div>
+      <div class="row-actions">
+        <button class="primary" id="btnGenerate" style="flex:1;"></button>
+        <button class="secondary" id="btnClearWeek">Netejar</button>
+      </div>
+      <div class="row-actions">
+        <button class="secondary" id="btnShareWeek" style="flex:1;"></button>
+      </div>
+    </section>
+
+    <section class="view" id="view-basics"><div id="basicsList"></div></section>
+
+    <section class="view" id="view-shop"><div id="shopWrap"></div></section>
+  </main>
+
+  <button class="fab" id="fabAdd" aria-label="Afegir plat"></button>
+
+  <nav class="tabs" id="tabbar"></nav>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Nou plat</h2>
+      <button class="icon-btn" id="sheetClose" aria-label="Tancar"></button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>Nom del plat</label>
+        <input type="text" id="fieldName" placeholder="p. ex. Arròs amb pollastre">
+      </div>
+      <div class="field">
+        <label>Quan el menges</label>
+        <div class="chips">
+          <div class="chip on" id="chipDinar">Dinar</div>
+          <div class="chip on" id="chipSopar">Sopar</div>
+        </div>
+        <div class="hint">El generador només posarà aquest plat als àpats que marquis.</div>
+      </div>
+      <div class="field">
+        <label>Ingredients (un per línia)</label>
+        <textarea id="fieldIngredients" placeholder="300 g arròs&#10;1 ceba&#10;2 tomàquets"></textarea>
+        <div class="hint">Posa la quantitat al davant si la vols sumar automàticament («200 g pollastre», «2 cebes»). Els bàsics de rebost (oli, sal…) no cal repetir-los aquí.</div>
+      </div>
+      <div class="row-actions">
+        <button class="primary" id="btnSaveDish" style="flex:1;">Desar</button>
+        <button class="danger" id="btnDeleteDish" style="display:none;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "elRebost_v2", OLDKEY = "elRebost_v1";
+  var DAYS = ["Dilluns","Dimarts","Dimecres","Dijous","Divendres","Dissabte","Diumenge"];
+  var UNITS = ["g","gr","grams","kg","kilo","kilos","ml","l","litre","litres","cullerada","cullerades","cda",
+    "culleradeta","culleradetes","tassa","tasses","unitat","unitats","u","llauna","llaunes","pot","pots",
+    "paquet","paquets","manat","manats","rodanxa","rodanxes","llesca","llesques","branca","branques","grapat","dent","dents"];
+
+  var S = {
+    svg: function(p, cls){ return '<svg class="ic '+(cls||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>'; },
+    bowl: '<path d="M3 11h18v1a9 9 0 0 1-18 0v-1z"/><path d="M8 7c0-2 2-2 2-4M14 7c0-2 2-2 2-4"/>',
+    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    jar: '<path d="M8 3h8M9 3v2.5L7.2 8v11a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2V8L15 5.5V3M7.2 12h9.6"/>',
+    basket: '<path d="M5 8h14l-1.4 11.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9.5 8L11 3M14.5 8L13 3M10 12v5M14 12v5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
+    trash: '<path d="M4 7h16M6.5 7l1 12.2a1.8 1.8 0 0 0 1.8 1.8h5.4a1.8 1.8 0 0 0 1.8-1.8L17.5 7M9.5 7V4.5h5V7M10 11v6M14 11v6"/>',
+    refresh: '<path d="M20.5 12a8.5 8.5 0 1 1-2.5-6M20.5 3.5v5h-5"/>',
+    share: '<path d="M12 15.5V3.5M8 7.5l4-4 4 4"/><path d="M5 13.5v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+    pencil: '<path d="M4 20h4L19.2 8.8a2 2 0 0 0-2.8-2.8L5 17.2V20z"/>'
+  };
+
+  var state = null, activeTab = "dishes", editingId = null;
+
+  function seed(){
+    return {
+      v:2,
+      dishes:[
+        {id:"d1",name:"Arròs amb pollastre",slots:["dinar"],lastUsed:null,ingredients:["400 g pollastre","300 g arròs","1 ceba","1 pebrot vermell","2 tomàquets"]},
+        {id:"d2",name:"Amanida de pasta i tonyina",slots:["dinar","sopar"],lastUsed:null,ingredients:["250 g pasta","1 llauna de tonyina","10 olives","1 tomàquet"]},
+        {id:"d3",name:"Truita de patates",slots:["sopar"],lastUsed:null,ingredients:["4 ous","3 patates","1 ceba"]},
+        {id:"d4",name:"Llenties amb verdures",slots:["dinar"],lastUsed:null,ingredients:["300 g llenties","1 pastanaga","1 ceba","1 porro","1 tomàquet"]},
+        {id:"d5",name:"Crema de carbassó",slots:["sopar"],lastUsed:null,ingredients:["2 carbassons","1 ceba","1 patata","1 formatget"]},
+        {id:"d6",name:"Salmó al forn amb verdures",slots:["dinar","sopar"],lastUsed:null,ingredients:["2 filets de salmó","1 carbassó","1 pebrot","2 patates","1 llimona"]}
+      ],
+      week: newWeek(),
+      basics:[
+        {id:"b1",name:"llet",group:"esmorzar",need:false},
+        {id:"b2",name:"cafè",group:"esmorzar",need:false},
+        {id:"b3",name:"iogurts",group:"esmorzar",need:false},
+        {id:"b4",name:"pa",group:"esmorzar",need:false},
+        {id:"b5",name:"cereals",group:"esmorzar",need:false},
+        {id:"b6",name:"fruita",group:"esmorzar",need:false},
+        {id:"b7",name:"galetes",group:"esmorzar",need:false},
+        {id:"b10",name:"oli d'oliva",group:"rebost",need:false},
+        {id:"b11",name:"sal",group:"rebost",need:false},
+        {id:"b12",name:"vinagre",group:"rebost",need:false},
+        {id:"b13",name:"pebre",group:"rebost",need:false},
+        {id:"b14",name:"all",group:"rebost",need:false},
+        {id:"b15",name:"tomàquet fregit",group:"rebost",need:false},
+        {id:"b16",name:"sucre",group:"rebost",need:false},
+        {id:"b17",name:"paper de cuina",group:"rebost",need:false}
+      ],
+      extras:[],
+      checked:{}
+    };
+  }
+  function newWeek(){ var w=[]; for(var i=0;i<7;i++) w.push({dinar:null,sopar:null}); return w; }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw) return migrate(JSON.parse(raw));
+      var old = localStorage.getItem(OLDKEY);
+      if(old){
+        var o = JSON.parse(old), s = seed();
+        s.dishes = (o.dishes||[]).map(function(d){ return {id:d.id,name:d.name,ingredients:d.ingredients||[],slots:["dinar","sopar"],lastUsed:null}; });
+        if(s.dishes.length===0) s.dishes = seed().dishes;
+        s.week = newWeek();
+        (o.week||[]).forEach(function(id,i){ if(i<7 && id) s.week[i].dinar = id; });
+        return s;
+      }
+    }catch(e){}
+    return seed();
+  }
+  function migrate(s){
+    if(!s.week || !Array.isArray(s.week) || !s.week[0] || typeof s.week[0]!=="object") s.week = newWeek();
+    if(!s.basics) s.basics = seed().basics;
+    if(!s.extras) s.extras = [];
+    if(!s.checked) s.checked = {};
+    (s.dishes||[]).forEach(function(d){ if(!d.slots || !d.slots.length) d.slots=["dinar","sopar"]; if(d.lastUsed===undefined) d.lastUsed=null; });
+    return s;
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+  function uid(p){ return (p||"x")+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+  function findDish(id){ for(var i=0;i<state.dishes.length;i++) if(state.dishes[i].id===id) return state.dishes[i]; return null; }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+
+  function toast(msg){
+    var t=document.createElement("div"); t.className="toast"; t.textContent=msg;
+    document.body.appendChild(t);
+    setTimeout(function(){t.classList.add("show");},10);
+    setTimeout(function(){t.classList.remove("show");setTimeout(function(){t.remove();},300);},2600);
+  }
+
+  /* ---------- Plats ---------- */
+  function renderDishes(){
+    var w = document.getElementById("dishList");
+    if(!state.dishes.length){ w.innerHTML='<div class="empty">Encara no tens cap plat.<br>Toca el botó + per afegir el primer.</div>'; return; }
+    var h="";
+    state.dishes.forEach(function(d){
+      var tags = d.slots.map(function(s){ return '<span class="pill">'+(s==="dinar"?"Dinar":"Sopar")+'</span>'; }).join(" ");
+      h += '<div class="card dish-row" data-open="'+d.id+'"><div><div class="name">'+esc(d.name)+'</div>'+
+           '<div class="meta">'+tags+'<span>'+d.ingredients.length+' ingredients</span></div></div>'+
+           '<div class="icon-btn">'+S.svg(S.pencil)+'</div></div>';
+    });
+    w.innerHTML=h;
+  }
+
+  /* ---------- Fitxa del plat ---------- */
+  function openSheet(id){
+    editingId = id||null;
+    var d = id?findDish(id):null;
+    document.getElementById("sheetTitle").textContent = d?"Editar plat":"Nou plat";
+    document.getElementById("fieldName").value = d?d.name:"";
+    document.getElementById("fieldIngredients").value = d?d.ingredients.join("\n"):"";
+    setChip("chipDinar", d? d.slots.indexOf("dinar")>-1 : true);
+    setChip("chipSopar", d? d.slots.indexOf("sopar")>-1 : true);
+    document.getElementById("btnDeleteDish").style.display = d?"block":"none";
+    document.getElementById("sheetBackdrop").classList.add("open");
+    setTimeout(function(){ document.getElementById("fieldName").focus(); },250);
+  }
+  function setChip(id,on){ document.getElementById(id).classList.toggle("on",!!on); }
+  function chipOn(id){ return document.getElementById(id).classList.contains("on"); }
+  function closeSheet(){ document.getElementById("sheetBackdrop").classList.remove("open"); editingId=null; }
+
+  function saveDish(){
+    var name = document.getElementById("fieldName").value.trim();
+    if(!name){ toast("Posa-li un nom al plat"); return; }
+    var slots=[]; if(chipOn("chipDinar")) slots.push("dinar"); if(chipOn("chipSopar")) slots.push("sopar");
+    if(!slots.length) slots=["dinar","sopar"];
+    var ing = document.getElementById("fieldIngredients").value.split("\n").map(function(l){return l.trim();}).filter(Boolean);
+    if(editingId){ var d=findDish(editingId); d.name=name; d.slots=slots; d.ingredients=ing; }
+    else state.dishes.push({id:uid("d"),name:name,slots:slots,ingredients:ing,lastUsed:null});
+    save(); closeSheet(); renderAll();
+  }
+  function deleteDish(){
+    if(!editingId) return;
+    var id=editingId;
+    state.dishes = state.dishes.filter(function(d){return d.id!==id;});
+    state.week.forEach(function(day){ if(day.dinar===id) day.dinar=null; if(day.sopar===id) day.sopar=null; });
+    save(); closeSheet(); renderAll();
+  }
+
+  /* ---------- Menú ---------- */
+  function renderMenu(){
+    var w = document.getElementById("weekList");
+    if(!state.dishes.length){ w.innerHTML='<div class="empty">Afegeix plats a la pestanya Plats abans de generar el menú.</div>'; return; }
+    var h="";
+    DAYS.forEach(function(day,i){
+      h += '<div class="day-card"><h3>'+day+'</h3>'+slotRow(i,"dinar","Dinar")+slotRow(i,"sopar","Sopar")+'</div>';
+    });
+    w.innerHTML=h;
+  }
+  function slotRow(i,slot,label){
+    var cur = state.week[i][slot];
+    var opts = '<option value="">— sense triar —</option>';
+    state.dishes.forEach(function(d){
+      var fits = d.slots.indexOf(slot)>-1;
+      if(fits || d.id===cur) opts += '<option value="'+d.id+'"'+(d.id===cur?' selected':'')+'>'+esc(d.name)+'</option>';
+    });
+    return '<div class="slot" data-slot="'+i+'-'+slot+'"><div class="lbl">'+label+'</div>'+
+      '<select data-day="'+i+'" data-meal="'+slot+'">'+opts+'</select>'+
+      '<button class="reroll" data-reroll="'+i+'-'+slot+'" aria-label="Canviar">'+S.svg(S.refresh,"ic-sm")+'</button></div>';
+  }
+  function eligible(slot){
+    var p = state.dishes.filter(function(d){ return d.slots.indexOf(slot)>-1; });
+    return p.length?p:state.dishes.slice();
+  }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+  function pick(pool, usedIds){
+    var fresh = pool.filter(function(d){ return usedIds.indexOf(d.id)===-1; });
+    var cands = fresh.length?fresh:pool;
+    shuffle(cands);
+    cands.sort(function(a,b){ return (a.lastUsed||0)-(b.lastUsed||0); });
+    var half = cands.slice(0, Math.max(1, Math.ceil(cands.length/2)));
+    return half[Math.floor(Math.random()*half.length)];
+  }
+  function generateWeek(){
+    if(!state.dishes.length) return;
+    var used=[];
+    var now = Date.now();
+    state.week = newWeek();
+    for(var i=0;i<7;i++){
+      ["dinar","sopar"].forEach(function(slot){
+        var d = pick(eligible(slot), used);
+        if(d){ state.week[i][slot]=d.id; used.push(d.id); d.lastUsed=now; }
+      });
+    }
+    save(); renderMenu(); renderShop(); renderTabs();
+    var rows=document.querySelectorAll(".slot");
+    rows.forEach(function(r,k){ setTimeout(function(){ r.classList.add("flash"); setTimeout(function(){r.classList.remove("flash");},700); }, k*45); });
+  }
+  function reroll(i,slot){
+    var cur = state.week[i][slot];
+    var pool = eligible(slot).filter(function(d){ return d.id!==cur; });
+    if(!pool.length) return;
+    var used=[];
+    state.week.forEach(function(day,k){ ["dinar","sopar"].forEach(function(s){ if(!(k===i&&s===slot)&&day[s]) used.push(day[s]); }); });
+    var d = pick(pool, used);
+    if(d){ state.week[i][slot]=d.id; d.lastUsed=Date.now(); save(); renderMenu(); renderShop(); renderTabs(); }
+  }
+  function clearWeek(){ state.week=newWeek(); save(); renderMenu(); renderShop(); renderTabs(); }
+
+  function shareWeek(){
+    var lines=["Menú setmanal — El Rebost",""];
+    DAYS.forEach(function(day,i){
+      var dn = state.week[i].dinar?findDish(state.week[i].dinar):null;
+      var sn = state.week[i].sopar?findDish(state.week[i].sopar):null;
+      lines.push(day);
+      lines.push("  Dinar: "+(dn?dn.name:"—"));
+      lines.push("  Sopar: "+(sn?sn.name:"—"));
+    });
+    shareText(lines.join("\n"), "Menú setmanal");
+  }
+
+  /* ---------- Bàsics ---------- */
+  var GROUPS = [{k:"esmorzar",t:"Esmorzars i berenars"},{k:"rebost",t:"Bàsics de rebost"}];
+  function renderBasics(){
+    var w=document.getElementById("basicsList"), h="";
+    GROUPS.forEach(function(g){
+      var items = state.basics.filter(function(b){return b.group===g.k;});
+      h += '<div class="group-title">'+g.t+'</div>';
+      h += '<div class="card tight">';
+      if(!items.length) h += '<div style="padding:16px 4px;color:var(--ink-muted);font-size:14px;">Encara no hi ha res aquí.</div>';
+      items.forEach(function(b){
+        h += '<div class="item-row'+(b.need?' on':'')+'" data-basic="'+b.id+'">'+
+             '<div class="checkbox">'+(b.need?S.svg(S.check,"ic-sm"):"")+'</div>'+
+             '<div class="label">'+esc(b.name)+'</div>'+
+             '<button class="icon-btn" data-delbasic="'+b.id+'" aria-label="Eliminar">'+S.svg(S.trash,"ic-sm")+'</button></div>';
+      });
+      h += '</div>';
+      h += '<div class="add-inline"><input type="text" placeholder="Afegir a '+g.t.toLowerCase()+'" data-addbasic="'+g.k+'">'+
+           '<button data-addbtn="'+g.k+'" aria-label="Afegir">'+S.svg(S.plus,"ic-sm")+'</button></div>';
+    });
+    h += '<div class="empty" style="margin-top:18px;border:none;padding:8px 4px;text-align:left;">Marca el que et falti i s\'afegirà a la llista de la compra. Un cop comprat i marcat a la llista, es desmarca sol.</div>';
+    w.innerHTML=h;
+  }
+  function addBasic(group){
+    var inp = document.querySelector('[data-addbasic="'+group+'"]');
+    var v = inp.value.trim(); if(!v) return;
+    state.basics.push({id:uid("b"),name:v.toLowerCase(),group:group,need:false});
+    save(); renderBasics(); renderTabs();
+  }
+
+  /* ---------- Compra ---------- */
+  var CATS = [
+    {k:"Fruita i verdura", words:["ceba","cebes","tomàquet","tomàquets","patata","patates","pastanaga","pastanagues","enciam","poma","pomes","plàtan","plàtans","all","alls","pebrot","pebrots","carbassó","carbassons","albergínia","albergínies","bròquil","espinacs","llimona","llimones","taronja","taronges","porro","porros","mongeta","mongetes","xampinyons","bolets","cogombre","api","carbassa","raïm","maduixes","julivert","alvocat","enciams","fruita","verdura","bledes","col","coliflor","espàrrecs","pèsols","meló","síndria","pera","peres","kiwi","nectarina","préssec"]},
+    {k:"Carn i ous", words:["pollastre","vedella","porc","ou","ous","bacon","pernil","salsitxa","salsitxes","botifarra","gall dindi","xai","carn","llom","costella","hamburguesa","hamburgueses","pit de pollastre"]},
+    {k:"Peix", words:["lluç","salmó","tonyina","gambes","bacallà","sípia","calamars","musclos","sardina","sardines","anxoves","peix","llagostins","rap","escamarlans"]},
+    {k:"Làctics", words:["llet","iogurt","iogurts","formatge","formatget","mantega","nata","crema de llet","quefir","mozzarella","parmesà"]},
+    {k:"Congelats", words:["congelat","congelats","gelat","pizza congelada"]},
+    {k:"Rebost", words:["arròs","pasta","llenties","cigrons","farina","sucre","sal","oli","vinagre","conserva","llauna","tomàquet fregit","brou","pebre","espècies","pa","cereals","cafè","te","galetes","xocolata","mel","fruits secs","olives","llevat","canela","pa ratllat","vi","llegums","salsa","ketchup","maionesa","mostassa","paper de cuina","paper","detergent","sabó","bosses"]}
+  ];
+  function categorize(name){
+    var n=" "+name.toLowerCase()+" ";
+    for(var i=0;i<CATS.length;i++){
+      for(var j=0;j<CATS[i].words.length;j++){
+        var w=CATS[i].words[j];
+        if(n.indexOf(" "+w+" ")>-1 || n.indexOf(" "+w+"s ")>-1 || n.indexOf(w)>-1) return CATS[i].k;
+      }
+    }
+    return "Altres";
+  }
+  function parseLine(line){
+    var m = line.match(/^(\d+(?:[.,]\d+)?(?:\/\d+)?)\s*(.*)$/);
+    if(!m) return {qty:null,unit:"",name:line.trim().toLowerCase()};
+    var q=m[1].replace(",",".");
+    if(q.indexOf("/")>-1){ var p=q.split("/"); q=parseFloat(p[0])/parseFloat(p[1]); } else q=parseFloat(q);
+    var rest=m[2].trim(), words=rest.split(/\s+/);
+    var fw=(words[0]||"").toLowerCase().replace(/[.,]/g,"");
+    if(UNITS.indexOf(fw)>-1){
+      var remainder = words.slice(1).join(" ");
+      if(remainder.toLowerCase().indexOf("de ")===0) remainder = remainder.slice(3);
+      return {qty:q,unit:fw,name:remainder.toLowerCase()};
+    }
+    return {qty:q,unit:"",name:rest.toLowerCase()};
+  }
+  function buildList(){
+    var g={};
+    function add(name,unit,qty,src){
+      var key=unit+"|"+name;
+      if(!g[key]) g[key]={name:name,unit:unit,qty:0,hasQty:false,n:0,src:src};
+      g[key].n++;
+      if(qty!==null&&qty!==undefined){ g[key].qty+=qty; g[key].hasQty=true; }
+      if(src==="basic") g[key].src="basic";
+    }
+    state.week.forEach(function(day){
+      ["dinar","sopar"].forEach(function(slot){
+        var d = day[slot]?findDish(day[slot]):null;
+        if(!d) return;
+        d.ingredients.forEach(function(l){ var p=parseLine(l); add(p.name,p.unit,p.qty,"recepta"); });
+      });
+    });
+    state.basics.forEach(function(b){ if(b.need) add(b.name,"",null,"basic"); });
+    state.extras.forEach(function(e){ add(e.name,"",null,"extra"); });
+    var arr = Object.keys(g).map(function(k){ var it=g[k]; it.key=k; it.cat=categorize(it.name); return it; });
+    arr.sort(function(a,b){ return a.name.localeCompare(b.name,"ca"); });
+    return arr;
+  }
+  function fmtQty(n){ return (Math.round(n*100)/100).toString().replace(".",","); }
+  function itemLabel(it){
+    if(it.hasQty) return fmtQty(it.qty)+(it.unit?" "+it.unit:"")+" "+it.name;
+    return it.name+(it.n>1&&it.src!=="basic"?" (x"+it.n+")":"");
+  }
+  function renderShop(){
+    var w=document.getElementById("shopWrap");
+    var items=buildList();
+    var addBox = '<div class="add-inline"><input type="text" id="extraInput" placeholder="Afegir article a la llista">'+
+                 '<button id="extraBtn" aria-label="Afegir">'+S.svg(S.plus,"ic-sm")+'</button></div>';
+    if(!items.length){
+      w.innerHTML = '<div class="empty">La llista és buida.<br>Genera el menú o marca què et falta a Bàsics.</div>'+addBox;
+      wireExtras(); return;
+    }
+    var done=0; items.forEach(function(it){ if(state.checked[it.key]) done++; });
+    var pct=Math.round(done/items.length*100);
+    var h='<div class="shop-progress"><div class="bar"><div style="width:'+pct+'%"></div></div><div class="count">'+done+' de '+items.length+'</div></div>';
+    var order = CATS.map(function(c){return c.k;}).concat(["Altres"]);
+    order.forEach(function(cat){
+      var group = items.filter(function(it){ return it.cat===cat; });
+      if(!group.length) return;
+      h += '<div class="group-title">'+cat+'</div><div class="card tight">';
+      group.forEach(function(it){
+        h += '<div class="item-row'+(state.checked[it.key]?" on":"")+'" data-key="'+encodeURIComponent(it.key)+'">'+
+             '<div class="checkbox">'+(state.checked[it.key]?S.svg(S.check,"ic-sm"):"")+'</div>'+
+             '<div class="label">'+esc(itemLabel(it))+'</div>'+
+             (it.src==="basic"?'<div class="src">bàsic</div>':'')+
+             (it.src==="extra"?'<button class="icon-btn" data-delextra="'+esc(it.name)+'" aria-label="Treure">'+S.svg(S.trash,"ic-sm")+'</button>':'')+
+             '</div>';
+      });
+      h += '</div>';
+    });
+    h += addBox;
+    h += '<div class="row-actions"><button class="secondary" id="btnUncheck" style="flex:1;">Desmarcar tot</button>'+
+         '<button class="secondary" id="btnShareList" style="flex:1;">'+S.svg(S.share,"ic-sm")+'Compartir</button></div>';
+    h += '<div class="row-actions"><button class="secondary" id="btnDoneShopping" style="flex:1;">'+S.svg(S.check,"ic-sm")+'Compra feta</button></div>';
+    w.innerHTML=h;
+
+    document.querySelectorAll("#shopWrap .item-row").forEach(function(r){
+      r.addEventListener("click",function(e){
+        if(e.target.closest("[data-delextra]")) return;
+        var k=decodeURIComponent(r.getAttribute("data-key"));
+        state.checked[k]=!state.checked[k]; save(); renderShop();
+      });
+    });
+    document.querySelectorAll("[data-delextra]").forEach(function(b){
+      b.addEventListener("click",function(e){
+        e.stopPropagation();
+        var n=b.getAttribute("data-delextra");
+        state.extras=state.extras.filter(function(x){return x.name!==n;});
+        save(); renderShop(); renderTabs();
+      });
+    });
+    document.getElementById("btnUncheck").addEventListener("click",function(){ state.checked={}; save(); renderShop(); });
+    document.getElementById("btnShareList").addEventListener("click",function(){ shareList(items); });
+    document.getElementById("btnDoneShopping").addEventListener("click",doneShopping);
+    wireExtras();
+  }
+  function wireExtras(){
+    var btn=document.getElementById("extraBtn"), inp=document.getElementById("extraInput");
+    if(!btn) return;
+    function go(){
+      var v=inp.value.trim(); if(!v) return;
+      state.extras.push({name:v.toLowerCase()}); save(); renderShop(); renderTabs();
+    }
+    btn.addEventListener("click",go);
+    inp.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
+  }
+  function doneShopping(){
+    var items=buildList(), n=0;
+    items.forEach(function(it){ if(state.checked[it.key]) n++; });
+    state.basics.forEach(function(b){
+      if(b.need && state.checked[""+"|"+b.name]) b.need=false;
+    });
+    state.extras = state.extras.filter(function(e){ return !state.checked[""+"|"+e.name]; });
+    state.checked={};
+    save(); renderShop(); renderBasics(); renderTabs();
+    toast(n?"Compra feta — "+n+" articles buidats":"Llista buidada");
+  }
+  function shareList(items){
+    var lines=["Llista de la compra — El Rebost",""];
+    var order=CATS.map(function(c){return c.k;}).concat(["Altres"]);
+    order.forEach(function(cat){
+      var g=items.filter(function(it){return it.cat===cat && !state.checked[it.key];});
+      if(!g.length) return;
+      lines.push(cat.toUpperCase());
+      g.forEach(function(it){ lines.push("- "+itemLabel(it)); });
+      lines.push("");
+    });
+    shareText(lines.join("\n"),"Llista de la compra");
+  }
+  function shareText(text,title){
+    if(navigator.share){
+      navigator.share({title:title,text:text}).catch(function(err){
+        if(err&&err.name==="AbortError") return;
+        copyText(text);
+      });
+    } else copyText(text);
+  }
+  function copyText(text){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ toast("Copiat — enganxa-ho on vulguis"); })
+      .catch(function(){ window.prompt("Copia aquest text:",text); });
+    } else window.prompt("Copia aquest text:",text);
+  }
+
+  /* ---------- Tabs ---------- */
+  var TABS=[
+    {k:"dishes",t:"Plats",ic:"bowl",sub:"els teus plats en rotació"},
+    {k:"menu",t:"Menú",ic:"cal",sub:"dinars i sopars de la setmana"},
+    {k:"basics",t:"Bàsics",ic:"jar",sub:"esmorzars, berenars i rebost"},
+    {k:"shop",t:"Compra",ic:"basket",sub:"la llista de la compra"}
+  ];
+  function renderTabs(){
+    var pending=0;
+    try{ pending = buildList().filter(function(it){ return !state.checked[it.key]; }).length; }catch(e){}
+    var h="";
+    TABS.forEach(function(t){
+      var badge = (t.k==="shop"&&pending)?'<span class="badge">'+pending+'</span>':"";
+      h += '<button data-tab="'+t.k+'" class="'+(activeTab===t.k?"active":"")+'">'+badge+S.svg(S[t.ic],"ic-lg")+t.t+'</button>';
+    });
+    document.getElementById("tabbar").innerHTML=h;
+    document.querySelectorAll("#tabbar button").forEach(function(b){
+      b.addEventListener("click",function(){ switchTab(b.getAttribute("data-tab")); });
+    });
+  }
+  function switchTab(k){
+    activeTab=k;
+    document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+    document.getElementById("view-"+k).classList.add("active");
+    var t=TABS.filter(function(x){return x.k===k;})[0];
+    document.getElementById("subtitle").textContent=t.sub;
+    document.getElementById("fabAdd").style.display = (k==="dishes")?"flex":"none";
+    renderTabs();
+    window.scrollTo(0,0);
+  }
+  function renderAll(){ renderDishes(); renderMenu(); renderBasics(); renderShop(); renderTabs(); }
+
+  /* ---------- Init ---------- */
+  document.addEventListener("DOMContentLoaded",function(){
+    state=load();
+    document.getElementById("fabAdd").innerHTML=S.svg(S.plus,"ic-lg");
+    document.getElementById("sheetClose").innerHTML=S.svg(S.close);
+    document.getElementById("btnGenerate").innerHTML=S.svg(S.refresh,"ic-sm")+"Generar setmana";
+    document.getElementById("btnShareWeek").innerHTML=S.svg(S.share,"ic-sm")+"Compartir el menú";
+    renderAll(); switchTab("dishes");
+
+    document.getElementById("fabAdd").addEventListener("click",function(){ openSheet(null); });
+    document.getElementById("sheetClose").addEventListener("click",closeSheet);
+    document.getElementById("sheetBackdrop").addEventListener("click",function(e){ if(e.target.id==="sheetBackdrop") closeSheet(); });
+    document.getElementById("btnSaveDish").addEventListener("click",saveDish);
+    document.getElementById("btnDeleteDish").addEventListener("click",deleteDish);
+    document.getElementById("chipDinar").addEventListener("click",function(){ this.classList.toggle("on"); });
+    document.getElementById("chipSopar").addEventListener("click",function(){ this.classList.toggle("on"); });
+
+    document.getElementById("dishList").addEventListener("click",function(e){
+      var o=e.target.closest("[data-open]"); if(o) openSheet(o.getAttribute("data-open"));
+    });
+
+    document.getElementById("btnGenerate").addEventListener("click",generateWeek);
+    document.getElementById("btnClearWeek").addEventListener("click",clearWeek);
+    document.getElementById("btnShareWeek").addEventListener("click",shareWeek);
+    document.getElementById("weekList").addEventListener("change",function(e){
+      if(e.target.tagName==="SELECT"){
+        var i=parseInt(e.target.getAttribute("data-day"),10), m=e.target.getAttribute("data-meal");
+        state.week[i][m]=e.target.value||null; save(); renderShop(); renderTabs();
+      }
+    });
+    document.getElementById("weekList").addEventListener("click",function(e){
+      var r=e.target.closest("[data-reroll]");
+      if(r){ var parts=r.getAttribute("data-reroll").split("-"); reroll(parseInt(parts[0],10),parts[1]); }
+    });
+
+    document.getElementById("basicsList").addEventListener("click",function(e){
+      var del=e.target.closest("[data-delbasic]");
+      if(del){ e.stopPropagation(); var id=del.getAttribute("data-delbasic");
+        state.basics=state.basics.filter(function(b){return b.id!==id;}); save(); renderBasics(); renderShop(); renderTabs(); return; }
+      var addb=e.target.closest("[data-addbtn]");
+      if(addb){ addBasic(addb.getAttribute("data-addbtn")); return; }
+      var row=e.target.closest("[data-basic]");
+      if(row){ var bid=row.getAttribute("data-basic");
+        state.basics.forEach(function(b){ if(b.id===bid) b.need=!b.need; });
+        save(); renderBasics(); renderShop(); renderTabs(); }
+    });
+    document.getElementById("basicsList").addEventListener("keydown",function(e){
+      if(e.key==="Enter"&&e.target.hasAttribute("data-addbasic")) addBasic(e.target.getAttribute("data-addbasic"));
+    });
+  });
+})();
+</script>
+</body>
+</html>
