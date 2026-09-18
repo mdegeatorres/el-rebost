@@ -9,22 +9,13 @@
 <meta name="apple-mobile-web-app-title" content="El Rebost">
 <title>El Rebost</title>
 
-<!-- ==================================================================== -->
-<!--  PAS 1 DE LA GUIA: enganxa aquí la configuració del teu Firebase.     -->
-<!--  Substitueix TOT el bloc de sota pel que et doni la consola.          -->
-<!--  No toquis res més del fitxer.                                        -->
-<!-- ==================================================================== -->
-<script>
-window.FIREBASE_CONFIG = {
-  apiKey: "ENGANXA_AQUI",
-  authDomain: "ENGANXA_AQUI",
-  projectId: "ENGANXA_AQUI",
-  storageBucket: "ENGANXA_AQUI",
-  messagingSenderId: "ENGANXA_AQUI",
-  appId: "ENGANXA_AQUI"
-};
-</script>
-<!-- ==================================================================== -->
+<!-- ====================================================================== -->
+<!--  La configuració del Firebase ja NO viu en aquest fitxer.              -->
+<!--  Viu a config.js, al costat d'aquest index.html al repositori.         -->
+<!--  Així pots actualitzar l'app tantes vegades com vulguis sense haver    -->
+<!--  de tornar a enganxar res: no toquis mai més config.js.                -->
+<!-- ====================================================================== -->
+<script src="config.js" onerror="window.CONFIG_MISSING=true"></script>
 
 <style>
   :root{
@@ -1115,14 +1106,29 @@ function addBasicFrom(group){
 
 function configured(){
   const c=window.FIREBASE_CONFIG||{};
-  return c.apiKey && c.apiKey!=="ENGANXA_AQUI" && c.projectId && c.projectId!=="ENGANXA_AQUI";
+  return !!(c.apiKey && c.apiKey!=="ENGANXA_AQUI" && c.projectId && c.projectId!=="ENGANXA_AQUI");
+}
+function screenNoConfig(){
+  const missing=!window.FIREBASE_CONFIG;
+  showGate(`
+    <h2>Falta la configuració</h2>
+    <p class="lead">L'app no troba les dades del teu projecte de Firebase, així que no pot obrir cap sessió ni sincronitzar res.</p>
+    <div class="gate-card">
+      <h3>${missing?"No hi ha config.js":"config.js encara té els valors d'exemple"}</h3>
+      <p>${missing
+        ? "Puja el fitxer <b>config.js</b> al repositori, a la mateixa carpeta que aquest index.html, amb la configuració que et dona la consola de Firebase."
+        : "Obre <b>config.js</b> al repositori i substitueix els <b>ENGANXA_AQUI</b> pels valors reals del teu projecte."}</p>
+      <p>Un cop fet, espera un minut i recarrega aquesta pàgina.</p>
+    </div>
+    <button class="linkish" id="btnLocalAnyway">Continuar només en aquest dispositiu</button>
+  `);
+  $("btnLocalAnyway").addEventListener("click",startLocal);
 }
 
 wireStaticUI();
 
 if(!configured()){
-  startLocal();
-  setTimeout(()=>toast("Firebase no configurat: mode local"),700);
+  screenNoConfig();
 } else {
   try{
     const app=initializeApp(window.FIREBASE_CONFIG);
