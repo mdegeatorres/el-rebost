@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="El Rebost">
+<title>El Rebost — menú setmanal</title>
+<style>
+  :root{
+    --bg:#F2F5EA; --bg-alt:#E9EEDD; --surface:#FFFFFF; --surface-2:#F7F9F1;
+    --ink:#23301F; --ink-muted:#6E7864; --line:#D7DDC5;
+    --accent:#3F6B4A; --accent-ink:#FFFFFF;
+    --spice:#B8721B; --spice-soft:#F3DDB0;
+    --danger:#B3492F; --danger-soft:#F3DBD2;
+    --radius:14px; --radius-sm:9px;
+    --shadow: 0 1px 2px rgba(35,48,31,0.07), 0 6px 16px rgba(35,48,31,0.07);
+    --font-display: ui-serif, Georgia, "Iowan Old Style", "Apple Garamond", "Times New Roman", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1A2420; --bg-alt:#202B25; --surface:#232F29; --surface-2:#1E2924;
+      --ink:#ECEFE2; --ink-muted:#9CA795; --line:#34423A;
+      --accent:#8FBB8E; --accent-ink:#122016;
+      --spice:#E8B45B; --spice-soft:#3A2E19;
+      --danger:#E08669; --danger-soft:#3A241D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1A2420; --bg-alt:#202B25; --surface:#232F29; --surface-2:#1E2924;
+    --ink:#ECEFE2; --ink-muted:#9CA795; --line:#34423A;
+    --accent:#8FBB8E; --accent-ink:#122016;
+    --spice:#E8B45B; --spice-soft:#3A2E19;
+    --danger:#E08669; --danger-soft:#3A241D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);}
+  body{min-height:100vh;overscroll-behavior-y:none;}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);}
+
+  header.top{position:sticky;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 14px) 20px 12px;background:var(--bg);border-bottom:1px solid var(--line);}
+  header.top h1{font-family:var(--font-display);font-weight:500;font-style:italic;font-size:26px;margin:0 0 2px;letter-spacing:0.2px;}
+  header.top p{margin:0;color:var(--ink-muted);font-size:13.5px;}
+
+  main{flex:1;padding:16px 16px calc(96px + env(safe-area-inset-bottom));}
+  section.view{display:none;}
+  section.view.active{display:block;}
+
+  .empty{border:1px dashed var(--line);border-radius:var(--radius);padding:28px 20px;text-align:center;color:var(--ink-muted);font-size:14.5px;line-height:1.5;}
+  .empty button{margin-top:12px;}
+
+  .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;}
+  .dish-row{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;}
+  .dish-row .name{font-size:16px;font-weight:600;}
+  .dish-row .meta{font-size:12.5px;color:var(--ink-muted);margin-top:2px;}
+  .icon-btn{border:none;background:transparent;color:var(--ink-muted);font-size:18px;padding:6px;line-height:1;cursor:pointer;border-radius:8px;}
+  .icon-btn:active{background:var(--bg-alt);}
+
+  .fab{position:fixed;right:calc(50% - 260px + 16px);bottom:calc(84px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:26px;border:none;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:6;}
+  @media (max-width:552px){ .fab{ right:16px; } }
+
+  button.primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:var(--radius-sm);padding:11px 16px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font-body);}
+  button.primary:active{opacity:0.85;}
+  button.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 15px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:var(--font-body);}
+  button.danger{background:var(--danger-soft);color:var(--danger);border:none;border-radius:var(--radius-sm);padding:10px 15px;font-size:14.5px;font-weight:600;cursor:pointer;}
+  .row-actions{display:flex;gap:8px;margin-top:14px;}
+
+  .week-row{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--line);}
+  .week-row:last-child{border-bottom:none;}
+  .week-row .day{width:78px;flex-shrink:0;font-size:14px;font-weight:600;}
+  .week-row select{flex:1;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:14px;font-family:var(--font-body);min-width:0;}
+  .week-row.flash select{background:var(--spice-soft);transition:background 0.6s ease;}
+  .reroll{background:none;border:none;font-size:18px;color:var(--ink-muted);cursor:pointer;padding:4px;flex-shrink:0;}
+
+  .shop-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .shop-progress .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .shop-progress .bar > div{height:100%;background:var(--accent);transition:width 0.3s ease;}
+  .shop-progress .count{font-size:12.5px;color:var(--ink-muted);white-space:nowrap;}
+
+  .item-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .item-row:last-child{border-bottom:none;}
+  .checkbox{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--accent-ink);}
+  .item-row.checked .checkbox{background:var(--accent);border-color:var(--accent);}
+  .item-row .label{font-size:15px;transition:opacity 0.2s, text-decoration-color 0.2s;}
+  .item-row.checked .label{color:var(--ink-muted);text-decoration:line-through;text-decoration-color:var(--ink-muted);}
+
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;}
+  nav.tabs button{flex:1;background:none;border:none;font-family:var(--font-body);color:var(--ink-muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;padding:4px 0;cursor:pointer;}
+  nav.tabs button .ic{font-size:21px;}
+  nav.tabs button.active{color:var(--accent);font-weight:700;}
+
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(20,26,18,0.4);z-index:10;display:none;}
+  .sheet-backdrop.open{display:block;}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -8px 28px rgba(0,0,0,0.25);z-index:11;transform:translateY(105%);transition:transform 0.28s cubic-bezier(.32,.72,0,1);max-height:88vh;display:flex;flex-direction:column;}
+  .sheet-backdrop.open .sheet{transform:translateY(0);}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 8px;flex-shrink:0;}
+  .sheet-head h2{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:20px;margin:0;}
+  .sheet-body{padding:4px 18px 18px;overflow-y:auto;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--ink-muted);margin-bottom:5px;font-weight:600;}
+  .field input, .field textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;color:var(--ink);font-family:var(--font-body);}
+  .field textarea{min-height:118px;resize:vertical;line-height:1.5;}
+  .field .hint{font-size:12px;color:var(--ink-muted);margin-top:5px;line-height:1.4;}
+  .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:13.5px;opacity:0;transition:opacity 0.25s, transform 0.25s;z-index:20;max-width:80%;text-align:center;pointer-events:none;}
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <h1>El Rebost</h1>
+    <p id="subtitle">els teus plats en rotació</p>
+  </header>
+
+  <main>
+    <section class="view active" id="view-dishes">
+      <div id="dishList"></div>
+    </section>
+
+    <section class="view" id="view-menu">
+      <div class="card" style="padding:6px 4px;">
+        <div id="weekList"></div>
+      </div>
+      <div class="row-actions">
+        <button class="primary" id="btnGenerate" style="flex:1;">🔀 Generar setmana</button>
+        <button class="secondary" id="btnClearWeek">Netejar</button>
+      </div>
+    </section>
+
+    <section class="view" id="view-shop">
+      <div id="shopWrap"></div>
+    </section>
+  </main>
+
+  <button class="fab" id="fabAdd" title="Afegir plat">+</button>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="dishes"><span class="ic">🥕</span>Plats</button>
+    <button class="tab" data-tab="menu"><span class="ic">📅</span>Menú</button>
+    <button class="tab" data-tab="shop"><span class="ic">🧺</span>Compra</button>
+  </nav>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Nou plat</h2>
+      <button class="icon-btn" id="sheetClose">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>Nom del plat</label>
+        <input type="text" id="fieldName" placeholder="p. ex. Arròs amb pollastre">
+      </div>
+      <div class="field">
+        <label>Ingredients (un per línia)</label>
+        <textarea id="fieldIngredients" placeholder="300 g arròs&#10;1 ceba&#10;2 tomàquets&#10;oli d'oliva"></textarea>
+        <div class="hint">Posa la quantitat al principi si la vols sumar automàticament a la llista de la compra (p. ex. «200 g pollastre», «2 cebes»). Si no hi ha número, s'afegirà igualment a la llista.</div>
+      </div>
+      <div class="row-actions">
+        <button class="primary" id="btnSaveDish" style="flex:1;">Desar</button>
+        <button class="danger" id="btnDeleteDish" style="display:none;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var STORAGE_KEY = "elRebost_v1";
+  var DAYS = ["Dilluns","Dimarts","Dimecres","Dijous","Divendres","Dissabte","Diumenge"];
+  var UNITS = ["g","gr","grams","kg","kilo","kilos","ml","mililitres","l","litre","litres",
+    "cullerada","cullerades","cda","culleradeta","culleradetes","tassa","tasses",
+    "unitat","unitats","u","llauna","llaunes","pot","pots","paquet","paquets",
+    "manat","manats","rodanxa","rodanxes","llesca","llesques","branca","branques","grapat"];
+
+  var state = null;
+
+  function seedState(){
+    return {
+      dishes: [
+        {id:"d1", name:"Arròs amb pollastre", ingredients:["400 g pollastre","300 g arròs","1 ceba","1 pebrot vermell","2 tomàquets madurs","oli d'oliva","all"]},
+        {id:"d2", name:"Amanida de pasta i tonyina", ingredients:["250 g pasta","1 llauna de tonyina","10 olives","1 tomàquet","oli d'oliva","vinagre"]},
+        {id:"d3", name:"Truita de patates", ingredients:["4 ous","3 patates","1 ceba","oli d'oliva","sal"]},
+        {id:"d4", name:"Llenties amb verdures", ingredients:["300 g llenties","1 pastanaga","1 ceba","1 porro","1 tomàquet","oli d'oliva","1 fulla de llorer"]}
+      ],
+      week: [null,null,null,null,null,null,null],
+      checked: {}
+    };
+  }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){ return JSON.parse(raw); }
+    }catch(e){ /* storage unavailable, fall back to seed for this session */ }
+    return seedState();
+  }
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ /* ignore, keep working in memory */ }
+  }
+
+  function uid(){ return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  function findDish(id){ for(var i=0;i<state.dishes.length;i++){ if(state.dishes[i].id===id) return state.dishes[i]; } return null; }
+
+  // ---------- Dishes tab ----------
+  function renderDishes(){
+    var wrap = document.getElementById("dishList");
+    if(state.dishes.length===0){
+      wrap.innerHTML = '<div class="empty">Encara no tens cap plat.<br>Toca el botó «+» per afegir el primer.</div>';
+      return;
+    }
+    var html = "";
+    state.dishes.forEach(function(d){
+      html += '<div class="card dish-row" data-open="'+d.id+'">' +
+        '<div><div class="name">'+escapeHtml(d.name)+'</div>' +
+        '<div class="meta">'+d.ingredients.length+' ingredient'+(d.ingredients.length===1?'':'s')+'</div></div>' +
+        '<div class="icon-btn" data-del="'+d.id+'">🗑️</div></div>';
+    });
+    wrap.innerHTML = html;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  // ---------- Sheet (add/edit dish) ----------
+  var editingId = null;
+  function openSheet(id){
+    editingId = id || null;
+    var d = id ? findDish(id) : null;
+    document.getElementById("sheetTitle").textContent = d ? "Editar plat" : "Nou plat";
+    document.getElementById("fieldName").value = d ? d.name : "";
+    document.getElementById("fieldIngredients").value = d ? d.ingredients.join("\n") : "";
+    document.getElementById("btnDeleteDish").style.display = d ? "block" : "none";
+    document.getElementById("sheetBackdrop").classList.add("open");
+    setTimeout(function(){ document.getElementById("fieldName").focus(); }, 250);
+  }
+  function closeSheet(){
+    document.getElementById("sheetBackdrop").classList.remove("open");
+    editingId = null;
+  }
+  function saveDishFromSheet(){
+    var name = document.getElementById("fieldName").value.trim();
+    if(!name) return;
+    var lines = document.getElementById("fieldIngredients").value.split("\n").map(function(l){return l.trim();}).filter(Boolean);
+    if(editingId){
+      var d = findDish(editingId);
+      d.name = name; d.ingredients = lines;
+    } else {
+      state.dishes.push({id:uid(), name:name, ingredients:lines});
+    }
+    save(); closeSheet(); renderDishes(); renderMenu(); renderShop();
+  }
+  function deleteDishFromSheet(){
+    if(!editingId) return;
+    state.dishes = state.dishes.filter(function(d){return d.id!==editingId;});
+    state.week = state.week.map(function(id){ return id===editingId ? null : id; });
+    save(); closeSheet(); renderDishes(); renderMenu(); renderShop();
+  }
+
+  // ---------- Menu tab ----------
+  function renderMenu(){
+    var wrap = document.getElementById("weekList");
+    if(state.dishes.length===0){
+      wrap.innerHTML = '<div class="empty">Afegeix algun plat a la pestanya «Plats» abans de generar el menú.</div>';
+      return;
+    }
+    var html = "";
+    DAYS.forEach(function(day, i){
+      var current = state.week[i];
+      html += '<div class="week-row" data-row="'+i+'"><div class="day">'+day+'</div>' +
+        '<select data-day="'+i+'">' +
+        '<option value="">— sense triar —</option>' +
+        state.dishes.map(function(d){
+          return '<option value="'+d.id+'"'+(d.id===current?' selected':'')+'>'+escapeHtml(d.name)+'</option>';
+        }).join("") +
+        '</select>' +
+        '<button class="reroll" data-reroll="'+i+'" title="Canviar aquest dia">🎲</button></div>';
+    });
+    wrap.innerHTML = html;
+  }
+
+  function pickWeekAssignment(){
+    var ids = state.dishes.map(function(d){return d.id;});
+    var pool = shuffle(ids.slice());
+    var result = [];
+    for(var i=0;i<7;i++){
+      if(pool.length===0) pool = shuffle(ids.slice());
+      result.push(pool.pop());
+    }
+    return result;
+  }
+  function shuffle(arr){
+    for(var i=arr.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+    }
+    return arr;
+  }
+  function generateWeek(){
+    if(state.dishes.length===0) return;
+    state.week = pickWeekAssignment();
+    save(); renderMenu();
+    var rows = document.querySelectorAll(".week-row");
+    rows.forEach(function(row, i){
+      setTimeout(function(){ row.classList.add("flash"); setTimeout(function(){row.classList.remove("flash");},650); }, i*70);
+    });
+    renderShop();
+  }
+  function rerollDay(i){
+    if(state.dishes.length===0) return;
+    var ids = state.dishes.map(function(d){return d.id;});
+    if(ids.length===1){ state.week[i]=ids[0]; }
+    else{
+      var choice;
+      do{ choice = ids[Math.floor(Math.random()*ids.length)]; } while(choice===state.week[i]);
+      state.week[i]=choice;
+    }
+    save(); renderMenu(); renderShop();
+  }
+  function clearWeek(){
+    state.week = [null,null,null,null,null,null,null];
+    save(); renderMenu(); renderShop();
+  }
+
+  // ---------- Shopping list ----------
+  function parseLine(line){
+    var m = line.match(/^(\d+(?:[.,]\d+)?(?:\/\d+)?)\s*(.*)$/);
+    if(!m) return {qty:null, unit:"", name:line.trim().toLowerCase()};
+    var qty = m[1].replace(",", ".");
+    if(qty.indexOf("/")>-1){
+      var parts = qty.split("/");
+      qty = parseFloat(parts[0])/parseFloat(parts[1]);
+    } else { qty = parseFloat(qty); }
+    var rest = m[2].trim();
+    var words = rest.split(/\s+/);
+    var firstWord = (words[0]||"").toLowerCase().replace(/[.,]/g,"");
+    if(UNITS.indexOf(firstWord)>-1){
+      return {qty:qty, unit:firstWord, name:words.slice(1).join(" ").toLowerCase()};
+    }
+    return {qty:qty, unit:"", name:rest.toLowerCase()};
+  }
+
+  function buildShoppingList(){
+    var groups = {};
+    state.week.forEach(function(dishId){
+      if(!dishId) return;
+      var d = findDish(dishId);
+      if(!d) return;
+      d.ingredients.forEach(function(line){
+        var parsed = parseLine(line);
+        var key = parsed.unit+"|"+parsed.name;
+        if(!groups[key]) groups[key] = {name:parsed.name, unit:parsed.unit, qty:0, hasQty:false, occurrences:0};
+        groups[key].occurrences++;
+        if(parsed.qty!==null){ groups[key].qty += parsed.qty; groups[key].hasQty = true; }
+      });
+    });
+    return Object.keys(groups).map(function(k){return groups[k];}).sort(function(a,b){
+      return a.name.localeCompare(b.name, "ca");
+    });
+  }
+
+  function fmtQty(n){
+    return (Math.round(n*100)/100).toString().replace(".", ",");
+  }
+
+  function buildShareText(items){
+    var lines = ["Llista de la compra — El Rebost", ""];
+    items.forEach(function(it){
+      var key = it.unit+"|"+it.name;
+      var isChecked = !!state.checked[key];
+      var label = it.hasQty ? fmtQty(it.qty)+(it.unit?(" "+it.unit):"")+" "+it.name : it.name+(it.occurrences>1?" (x"+it.occurrences+")":"");
+      lines.push((isChecked?"☑ ":"☐ ")+label);
+    });
+    return lines.join("\n");
+  }
+  function toast(msg){
+    var t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){ t.classList.add("show"); }, 10);
+    setTimeout(function(){ t.classList.remove("show"); setTimeout(function(){ t.remove(); }, 300); }, 2600);
+  }
+  function fallbackCopy(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        toast("Llista copiada — enganxa-la a Notes o on vulguis");
+      }).catch(function(){ window.prompt("Copia aquest text i enganxa'l a Notes:", text); });
+    } else {
+      window.prompt("Copia aquest text i enganxa'l a Notes:", text);
+    }
+  }
+  function shareList(items){
+    var text = buildShareText(items);
+    if(navigator.share){
+      navigator.share({title:"Llista de la compra", text:text}).catch(function(err){
+        if(err && err.name==="AbortError") return;
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function renderShop(){
+    var wrap = document.getElementById("shopWrap");
+    var items = buildShoppingList();
+    if(items.length===0){
+      wrap.innerHTML = '<div class="empty">El menú d\'aquesta setmana encara està buit.<br>Genera\'l a la pestanya «Menú».</div>';
+      return;
+    }
+    var checkedCount = 0;
+    items.forEach(function(it){ var k=it.unit+"|"+it.name; if(state.checked[k]) checkedCount++; });
+    var pct = Math.round((checkedCount/items.length)*100);
+    var html = '<div class="shop-progress"><div class="bar"><div style="width:'+pct+'%;"></div></div>' +
+      '<div class="count">'+checkedCount+' de '+items.length+'</div></div>' +
+      '<div class="card" style="padding:4px 4px;">';
+    items.forEach(function(it){
+      var key = it.unit+"|"+it.name;
+      var isChecked = !!state.checked[key];
+      var label = it.hasQty ? fmtQty(it.qty)+(it.unit?(" "+it.unit):"")+" "+it.name : it.name+(it.occurrences>1?" (x"+it.occurrences+")":"");
+      html += '<div class="item-row'+(isChecked?' checked':'')+'" data-key="'+encodeURIComponent(key)+'">' +
+        '<div class="checkbox">'+(isChecked?'✓':'')+'</div><div class="label">'+escapeHtml(label)+'</div></div>';
+    });
+    html += '</div><div class="row-actions"><button class="secondary" id="btnUncheckAll" style="flex:1;">Desmarcar tot</button><button class="secondary" id="btnShareList" style="flex:1;">📤 Compartir</button></div>';
+    wrap.innerHTML = html;
+    document.querySelectorAll(".item-row").forEach(function(row){
+      row.addEventListener("click", function(){
+        var key = decodeURIComponent(row.getAttribute("data-key"));
+        state.checked[key] = !state.checked[key];
+        save(); renderShop();
+      });
+    });
+    var unc = document.getElementById("btnUncheckAll");
+    if(unc) unc.addEventListener("click", function(){ state.checked = {}; save(); renderShop(); });
+    var shareBtn = document.getElementById("btnShareList");
+    if(shareBtn) shareBtn.addEventListener("click", function(){ shareList(items); });
+  }
+
+  // ---------- Tabs ----------
+  var SUBTITLES = {dishes:"els teus plats en rotació", menu:"el menú d'aquesta setmana", shop:"la llista de la compra"};
+  function switchTab(tab){
+    document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+    document.getElementById("view-"+tab).classList.add("active");
+    document.querySelectorAll("nav.tabs button").forEach(function(b){b.classList.toggle("active", b.getAttribute("data-tab")===tab);});
+    document.getElementById("subtitle").textContent = SUBTITLES[tab];
+    document.getElementById("fabAdd").style.display = tab==="dishes" ? "flex" : "none";
+  }
+
+  // ---------- Wire up ----------
+  document.addEventListener("DOMContentLoaded", function(){
+    state = load();
+    renderDishes(); renderMenu(); renderShop();
+
+    document.querySelectorAll("nav.tabs button").forEach(function(b){
+      b.addEventListener("click", function(){ switchTab(b.getAttribute("data-tab")); });
+    });
+
+    document.getElementById("fabAdd").addEventListener("click", function(){ openSheet(null); });
+    document.getElementById("sheetClose").addEventListener("click", closeSheet);
+    document.getElementById("sheetBackdrop").addEventListener("click", function(e){ if(e.target.id==="sheetBackdrop") closeSheet(); });
+    document.getElementById("btnSaveDish").addEventListener("click", saveDishFromSheet);
+    document.getElementById("btnDeleteDish").addEventListener("click", deleteDishFromSheet);
+
+    document.getElementById("dishList").addEventListener("click", function(e){
+      var del = e.target.closest("[data-del]");
+      if(del){ e.stopPropagation(); openSheet(del.getAttribute("data-del")); document.getElementById("btnDeleteDish").style.display="block"; return; }
+      var open = e.target.closest("[data-open]");
+      if(open){ openSheet(open.getAttribute("data-open")); }
+    });
+
+    document.getElementById("btnGenerate").addEventListener("click", generateWeek);
+    document.getElementById("btnClearWeek").addEventListener("click", clearWeek);
+
+    document.getElementById("weekList").addEventListener("change", function(e){
+      if(e.target.tagName==="SELECT"){
+        var i = parseInt(e.target.getAttribute("data-day"),10);
+        state.week[i] = e.target.value || null;
+        save(); renderShop();
+      }
+    });
+    document.getElementById("weekList").addEventListener("click", function(e){
+      var r = e.target.closest("[data-reroll]");
+      if(r){ rerollDay(parseInt(r.getAttribute("data-reroll"),10)); }
+    });
+
+    switchTab("dishes");
+  });
+})();
+</script>
+</body>
+</html>
