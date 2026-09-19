@@ -10,8 +10,8 @@
 <meta name="theme-color" content="#F2F5EA" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1A2420" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
+<link rel="icon" href="icon.svg?v=2" type="image/svg+xml">
+<link rel="icon" href="icon-192.png?v=2" type="image/png" sizes="192x192">
 <link rel="manifest" href="manifest.json">
 <title>El Rebost</title>
 
@@ -211,6 +211,12 @@
   .slotnote{font-size:12px;color:var(--ink-muted);padding:0 0 6px 62px;font-style:italic;}
   .searchbox{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:12px;color:var(--ink-muted);transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
   .searchbox input{flex:1;border:none;background:none;padding:11px 0;font-size:15px;color:var(--ink);font-family:var(--font-body);outline:none;min-width:0;}
+  /* La creu de sèrie del navegador només surt a l'escriptori; en posem una de
+     pròpia que es vegi a tot arreu, i amaguem la nativa per no duplicar-la. */
+  .searchbox input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;}
+  .searchbox .clearbtn{background:none;border:none;color:var(--ink-muted);padding:6px;margin-right:-4px;cursor:pointer;display:flex;align-items:center;border-radius:99px;flex-shrink:0;transition:color var(--dur) var(--ease),background-color var(--dur) var(--ease),transform var(--dur-fast) var(--ease-out);}
+  .searchbox .clearbtn:active{transform:scale(.86);background:var(--bg-alt);}
+  [hidden]{display:none !important;}
   .pickrow{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:13px 4px;font-size:15px;color:var(--ink);font-family:var(--font-body);cursor:pointer;transition:opacity var(--dur-fast) var(--ease),color var(--dur) var(--ease);}
   .pickrow:active{opacity:.55;}
   .pickrow.cur{color:var(--accent);font-weight:700;}
@@ -400,6 +406,7 @@
     .pickrow:hover{background:var(--surface-2);}
     .slotpick:not(:disabled):hover{border-color:var(--ink-muted);}
     .dragrow:hover{border-color:var(--ink-muted);}
+    .searchbox .clearbtn:hover{color:var(--ink);background:var(--bg-alt);}
   }
 </style>
 </head>
@@ -459,7 +466,7 @@
   <div class="sheet">
     <div class="sheet-head"><h2 id="pickTitle">Triar plat</h2><button class="icon-btn" id="pickClose" aria-label="Tancar"></button></div>
     <div class="sheet-body">
-      <div class="searchbox" style="margin-bottom:10px;"><input type="search" id="pickSearch" placeholder="Escriu per filtrar"></div>
+      <div class="searchbox" style="margin-bottom:10px;"><input type="search" id="pickSearch" placeholder="Escriu per filtrar"><button type="button" class="clearbtn" id="pickClear" aria-label="Esborrar la cerca" hidden><svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
       <div id="pickList"></div>
       <div class="field" style="margin-top:14px;"><label>Nota per als sobres (opcional)</label>
         <input type="text" id="pickNote" placeholder="p. ex. de l'arròs de dilluns"></div>
@@ -881,7 +888,9 @@ function renderDishes(){
   const w=$("dishList");
   if(!state.dishes.length){w.innerHTML='<div class="empty">Encara no hi ha cap plat.<br>Toca el botó + per afegir-ne un.</div>';return;}
   const searchBox='<div class="searchbox">'+S.svg(S.search,"ic-sm")+
-    '<input type="search" id="dishSearch" placeholder="Cercar plat o ingredient" value="'+esc(dishQuery)+'"></div>';
+    '<input type="search" id="dishSearch" placeholder="Cercar plat o ingredient" value="'+esc(dishQuery)+'">'+
+    (dishQuery?'<button type="button" class="clearbtn" id="dishClear" aria-label="Esborrar la cerca">'+S.svg(S.close,"ic-sm")+'</button>':"")+
+    '</div>';
   const nq=norm(dishQuery);
   const list=[...state.dishes].filter(d=>!nq||norm(d.name).includes(nq)||d.ingredients.some(x=>norm(x).includes(nq)));
   if(!list.length){
@@ -904,6 +913,11 @@ function wireDishSearch(){
     const pos=inp.selectionStart;
     renderDishes();
     const n=$("dishSearch"); if(n){n.focus();n.setSelectionRange(pos,pos);}
+  });
+  const cl=$("dishClear");
+  if(cl)cl.addEventListener("click",()=>{
+    dishQuery=""; renderDishes();
+    const n=$("dishSearch"); if(n)n.focus();
   });
 }
 const lockKey=(i,slot)=>i+"-"+slot;
@@ -1216,7 +1230,7 @@ function openPicker(key){
   pickSlot=key;
   const [i,slot]=key.split("-");
   $("pickTitle").textContent=(slot==="dinar"?"Dinar":"Sopar")+" de "+DAYS[parseInt(i,10)].toLowerCase();
-  $("pickSearch").value="";
+  $("pickSearch").value=""; $("pickClear").hidden=true;
   $("pickNote").value=(state.notes&&state.notes[key])||"";
   renderPickList("");
   $("pickerBackdrop").classList.add("open");
@@ -2142,7 +2156,14 @@ function wireStaticUI(){
   $("orderBackdrop").addEventListener("click",e=>{if(e.target.id==="orderBackdrop")$("orderBackdrop").classList.remove("open");});
   $("pickClose").addEventListener("click",()=>$("pickerBackdrop").classList.remove("open"));
   $("pickerBackdrop").addEventListener("click",e=>{if(e.target.id==="pickerBackdrop")$("pickerBackdrop").classList.remove("open");});
-  $("pickSearch").addEventListener("input",()=>renderPickList($("pickSearch").value));
+  $("pickSearch").addEventListener("input",()=>{
+    renderPickList($("pickSearch").value);
+    $("pickClear").hidden=!$("pickSearch").value;
+  });
+  $("pickClear").addEventListener("click",()=>{
+    $("pickSearch").value=""; $("pickClear").hidden=true;
+    renderPickList(""); $("pickSearch").focus();
+  });
   $("weekList").addEventListener("click",e=>{
     const pk=e.target.closest("[data-pick]");
     if(pk){openPicker(pk.getAttribute("data-pick"));return;}
