@@ -1082,6 +1082,64 @@ function gotoWeek(off){
   else subscribeWeek();
 }
 
+/* ---------- lliscar amb el dit per canviar de setmana ----------
+   Només entra quan el moviment és clarament horitzontal: si no, deixa passar
+   el desplaçament vertical de tota la vida. Als extrems fa resistència. */
+function wireWeekSwipe(){
+  const host=$("weekList");
+  const still=()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canGo=d=>d>0?viewOffset<MAX_AHEAD:viewOffset>-MAX_BACK;
+  let x0=0,y0=0,dx=0,pane=null,on=false,horiz=false,busy=false;
+
+  const relax=p=>{ if(p){p.style.transition="";p.style.transform="";p.style.opacity="";p.style.animation="";} };
+  const reset=()=>{ pane=null;on=false;horiz=false;dx=0; };
+
+  host.addEventListener("touchstart",e=>{
+    if(busy||e.touches.length!==1||e.target.closest("select"))return;
+    pane=host.querySelector(".weekdays"); if(!pane)return;
+    on=true; horiz=false; dx=0;
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY;
+  },{passive:true});
+
+  host.addEventListener("touchmove",e=>{
+    if(!on||!pane)return;
+    const x=e.touches[0].clientX-x0, y=e.touches[0].clientY-y0;
+    if(!horiz){
+      if(Math.abs(y)>10&&Math.abs(y)>=Math.abs(x)){ on=false; return; }
+      if(Math.abs(x)<10) return;
+      horiz=true; pane.style.animation="none"; pane.style.transition="none";
+    }
+    e.preventDefault();
+    dx=x*(canGo(x<0?1:-1)?0.62:0.16);
+    dx=Math.max(-150,Math.min(150,dx));
+    pane.style.transform="translateX("+dx+"px)";
+    pane.style.opacity=String(Math.max(0.45,1-Math.abs(dx)/260));
+  },{passive:false});
+
+  const end=()=>{
+    if(!on||!pane){ reset(); return; }
+    const p=pane, dir=dx<0?1:-1;
+    if(horiz&&Math.abs(dx)>46&&canGo(dir)){
+      const target=viewOffset+dir;
+      reset();
+      if(still()){ relax(p); gotoWeek(target); return; }
+      busy=true;
+      p.style.transition="transform 150ms var(--ease), opacity 150ms var(--ease)";
+      p.style.transform="translateX("+(dir>0?-70:70)+"px)";
+      p.style.opacity="0";
+      setTimeout(()=>{ busy=false; gotoWeek(target); },140);
+      return;
+    }
+    reset();
+    if(!horiz){ relax(p); return; }
+    p.style.transition="transform 220ms var(--ease-out), opacity 220ms var(--ease-out)";
+    p.style.transform="translateX(0)"; p.style.opacity="1";
+    setTimeout(()=>relax(p),240);
+  };
+  host.addEventListener("touchend",end);
+  host.addEventListener("touchcancel",end);
+}
+
 /* ---------- selector de plat amb cerca ---------- */
 let pickSlot=null;
 function openPicker(key){
@@ -2024,6 +2082,7 @@ function wireStaticUI(){
     const r=e.target.closest("[data-reroll]");
     if(r){const[i,s]=r.getAttribute("data-reroll").split("-");reroll(parseInt(i,10),s);}
   });
+  wireWeekSwipe();
   $("basicsList").addEventListener("click",e=>{
     const del=e.target.closest("[data-delbasic]");
     if(del){e.stopPropagation();DB.deleteBasic(del.getAttribute("data-delbasic")).catch(showErr);renderBasics();renderShop();renderTabs();return;}
