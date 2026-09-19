@@ -1177,6 +1177,22 @@ function gotoWeek(off){
   else subscribeWeek();
 }
 
+/* ---------- els fulls no es queden sota el teclat ----------
+   A iOS el teclat no encongeix la finestra: un element ancorat a baix segueix
+   ancorat al fons real de la pantalla, tapat. visualViewport sí que ens diu
+   quina part es veu, així que hi apugem el full i li limitem l'alçada perquè
+   la llista es pugui recórrer sense haver de tancar el teclat. */
+function fitSheets(){
+  const vv=window.visualViewport; if(!vv||vv.height<200)return;
+  const tapat=Math.round(window.innerHeight-vv.height-vv.offsetTop);
+  const puja=tapat>80?tapat:0;      // 80 px: prou per no confondre-ho amb una barra del navegador
+  const alt=Math.round(vv.height*0.88);
+  document.querySelectorAll(".sheet").forEach(s=>{
+    s.style.bottom=puja+"px";
+    s.style.maxHeight=alt+"px";
+  });
+}
+
 /* ---------- lliscar amb el dit per canviar de setmana ----------
    Només entra quan el moviment és clarament horitzontal: si no, deixa passar
    el desplaçament vertical de tota la vida. Als extrems fa resistència. */
@@ -2173,6 +2189,11 @@ function wireStaticUI(){
     if(r){const[i,s]=r.getAttribute("data-reroll").split("-");reroll(parseInt(i,10),s);}
   });
   wireWeekSwipe();
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize",fitSheets);
+    window.visualViewport.addEventListener("scroll",fitSheets);
+    fitSheets();
+  }
   $("basicsList").addEventListener("click",e=>{
     const del=e.target.closest("[data-delbasic]");
     if(del){e.stopPropagation();DB.deleteBasic(del.getAttribute("data-delbasic")).catch(showErr);renderBasics();renderShop();renderTabs();return;}
