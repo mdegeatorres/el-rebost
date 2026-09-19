@@ -222,6 +222,10 @@
      amb overflow:hidden el marge de l'última targeta deixava de col·lapsar i
      els botons de sota feien un salt de 10 px cada cop que es canviava de setmana. */
   #view-menu{position:relative;overflow-x:clip;overflow-clip-margin:16px;}
+  /* Mentre una setmana substitueix l'altra, els botons de sota no es pinten:
+     canvien d'estat segons si la setmana és planificable i, si no, el verd
+     apareixia enmig de l'animació. Amb visibility es manté l'espai i res no salta. */
+  #view-menu.swapping #btnGenerate,#view-menu.swapping #btnClearWeek{visibility:hidden;}
   .weekdays{display:block;}
   .weekdays.ghost{position:absolute;z-index:1;pointer-events:none;will-change:transform;}
   .slide-next{animation:weekInNext var(--dur-week) var(--ease-out);}
@@ -1109,19 +1113,25 @@ function changeWeek(target,startX){
   const host=$("weekList"), view=$("view-menu"), ghost=host.querySelector(".weekdays");
   const still=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(!ghost||still){ gotoWeek(target); return; }
-  const gr=ghost.getBoundingClientRect(), vr=view.getBoundingClientRect();
-  const top=gr.top-vr.top, left=gr.left-vr.left, w=gr.width, h0=host.offsetHeight;
+  const h0=host.offsetHeight;
   gotoWeek(target);
   const h1=host.offsetHeight;
   // La còpia que marxa penja de la vista, no de #weekList: així sobreviu si el
-  // núvol torna a dibuixar la setmana mentre encara s'està animant.
+  // núvol torna a dibuixar la setmana mentre encara s'està animant. Es col·loca
+  // amb la geometria del panell nou perquè totes dues siguin exactament iguals,
+  // i el desplaçament va en % de la seva amplada: així no es poden descompassar.
+  // offsetTop/Left/Width són mides de maquetació: no les altera l'animació que
+  // el panell nou ja té posada (getBoundingClientRect sí, i el desplaçava).
+  const fresh=host.querySelector(".weekdays")||ghost;
+  const top=fresh.offsetTop, left=fresh.offsetLeft, w=fresh.offsetWidth;
+  view.classList.add("swapping");
   ghost.className="weekdays ghost";
   ghost.style.cssText="top:"+top+"px;left:"+left+"px;width:"+w+"px;"+
     "transition:none;transform:translate3d("+(startX||0)+"px,0,0);";
   view.appendChild(ghost);
   void ghost.offsetWidth;   // fixa la posició de sortida: si no, no hi ha transició
   ghost.style.transition="transform var(--dur-week) var(--ease-out)";
-  ghost.style.transform="translate3d("+(dir>0?-w:w)+"px,0,0)";
+  ghost.style.transform="translateX("+(dir>0?-100:100)+"%)";
   // Si la setmana nova no fa la mateixa alçada, acompanya-la en comptes de
   // fer un escaló que empenyi els botons de sota.
   if(h0!==h1){
@@ -1133,6 +1143,7 @@ function changeWeek(target,startX){
   }
   setTimeout(()=>{
     ghost.remove();
+    view.classList.remove("swapping");
     host.style.transition=""; host.style.height=""; host.style.overflow="";
   },380);
 }
