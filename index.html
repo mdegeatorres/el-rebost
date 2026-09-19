@@ -35,6 +35,7 @@
     --dur-fast: 120ms;
     --dur: 160ms;
     --dur-slow: 220ms;
+    --dur-week: 320ms;
     --bar-bg: rgba(242,245,234,0.72);
   }
   @media (prefers-color-scheme: dark){
@@ -217,11 +218,16 @@
   .todaycard .thead{font-size:11.5px;font-weight:700;letter-spacing:0.2px;opacity:0.75;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;line-height:16px;min-height:16px;}
   .tback{display:inline-flex;align-items:center;gap:1px;font-weight:800;white-space:nowrap;flex-shrink:0;line-height:16px;}
   .tback svg{width:13px;height:13px;stroke-width:2.4;}
+  #weekList{position:relative;}
+  #weekList.sliding{overflow:hidden;}
   .weekdays{display:block;}
-  .slide-next{animation:weekInNext 300ms var(--ease-out);}
-  .slide-prev{animation:weekInPrev 300ms var(--ease-out);}
-  @keyframes weekInNext{from{opacity:0;transform:translateX(26px);}to{opacity:1;transform:translateX(0);}}
-  @keyframes weekInPrev{from{opacity:0;transform:translateX(-26px);}to{opacity:1;transform:translateX(0);}}
+  .weekdays.ghost{position:absolute;left:0;z-index:1;pointer-events:none;}
+  .slide-next{animation:weekInNext var(--dur-week) var(--ease-out);}
+  .slide-prev{animation:weekInPrev var(--dur-week) var(--ease-out);}
+  @keyframes weekInNext{from{transform:translateX(100%);}to{transform:translateX(0);}}
+  @keyframes weekInPrev{from{transform:translateX(-100%);}to{transform:translateX(0);}}
+  .wlabel.slide-next,.wlabel.slide-prev{animation:labelIn var(--dur-week) var(--ease-out);}
+  @keyframes labelIn{from{opacity:0;}to{opacity:1;}}
   .todaycard .tl{display:flex;align-items:baseline;gap:10px;padding:2px 0;}
   .todaycard .tlab{font-size:12px;opacity:0.75;width:46px;flex-shrink:0;}
   .todaycard .tval{font-size:15px;min-width:0;}
@@ -953,9 +959,9 @@ function renderMenu(){
   $("btnClearWeek").style.display=editable?"flex":"none";
 }
 function wireWeekNav(){
-  if($("wPrev"))$("wPrev").addEventListener("click",()=>gotoWeek(viewOffset-1));
-  if($("wNext"))$("wNext").addEventListener("click",()=>gotoWeek(viewOffset+1));
-  if($("todayBack"))$("todayBack").addEventListener("click",()=>gotoWeek(0));
+  if($("wPrev"))$("wPrev").addEventListener("click",()=>changeWeek(viewOffset-1));
+  if($("wNext"))$("wNext").addEventListener("click",()=>changeWeek(viewOffset+1));
+  if($("todayBack"))$("todayBack").addEventListener("click",()=>changeWeek(0));
   if($("wRepeat"))$("wRepeat").addEventListener("click",askRepeatTarget);
 }
 
@@ -1072,6 +1078,32 @@ function slideClass(){
   if(!weekSlide||Date.now()-weekSlideAt>400)return "";
   return weekSlide>0?" slide-next":" slide-prev";
 }
+// Canvi de setmana amb lliscament sencer: la setmana que marxa se'n va del tot
+// cap al seu costat mentre la nova entra per l'altre. startX és on ha quedat el
+// dit, perquè el gest continuï sense salt; les fletxes comencen de zero.
+function changeWeek(target,startX){
+  target=Math.max(-MAX_BACK,Math.min(MAX_AHEAD,target));
+  if(target===viewOffset)return;
+  const dir=target>viewOffset?1:-1;
+  const host=$("weekList"), ghost=host.querySelector(".weekdays");
+  const still=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!ghost||still){ gotoWeek(target); return; }
+  const top=ghost.offsetTop, w=ghost.offsetWidth;
+  gotoWeek(target);
+  ghost.className="weekdays ghost";
+  ghost.style.animation="none";
+  ghost.style.opacity="";
+  ghost.style.top=top+"px";
+  ghost.style.width=w+"px";
+  ghost.style.transition="none";
+  ghost.style.transform="translateX("+(startX||0)+"px)";
+  host.classList.add("sliding");
+  host.appendChild(ghost);
+  void ghost.offsetWidth;   // fixa la posició de sortida: si no, no hi ha transició
+  ghost.style.transition="transform var(--dur-week) var(--ease-out)";
+  ghost.style.transform="translateX("+(dir>0?-w:w)+"px)";
+  setTimeout(()=>{ ghost.remove(); host.classList.remove("sliding"); },380);
+}
 function gotoWeek(off){
   off=Math.max(-MAX_BACK,Math.min(MAX_AHEAD,off));
   if(off!==viewOffset){ weekSlide=off>viewOffset?1:-1; weekSlideAt=Date.now(); }
@@ -1087,15 +1119,14 @@ function gotoWeek(off){
    el desplaçament vertical de tota la vida. Als extrems fa resistència. */
 function wireWeekSwipe(){
   const host=$("weekList");
-  const still=()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const canGo=d=>d>0?viewOffset<MAX_AHEAD:viewOffset>-MAX_BACK;
-  let x0=0,y0=0,dx=0,pane=null,on=false,horiz=false,busy=false;
+  let x0=0,y0=0,dx=0,pane=null,on=false,horiz=false;
 
   const relax=p=>{ if(p){p.style.transition="";p.style.transform="";p.style.opacity="";p.style.animation="";} };
   const reset=()=>{ pane=null;on=false;horiz=false;dx=0; };
 
   host.addEventListener("touchstart",e=>{
-    if(busy||e.touches.length!==1||e.target.closest("select"))return;
+    if(e.touches.length!==1||e.target.closest("select"))return;
     pane=host.querySelector(".weekdays"); if(!pane)return;
     on=true; horiz=false; dx=0;
     x0=e.touches[0].clientX; y0=e.touches[0].clientY;
@@ -1107,34 +1138,24 @@ function wireWeekSwipe(){
     if(!horiz){
       if(Math.abs(y)>10&&Math.abs(y)>=Math.abs(x)){ on=false; return; }
       if(Math.abs(x)<10) return;
-      horiz=true; pane.style.animation="none"; pane.style.transition="none";
+      horiz=true;
+      host.classList.add("sliding");
+      pane.style.animation="none"; pane.style.transition="none";
     }
     e.preventDefault();
-    dx=x*(canGo(x<0?1:-1)?0.62:0.16);
-    dx=Math.max(-150,Math.min(150,dx));
+    dx=x*(canGo(x<0?1:-1)?1:0.18);              // el contingut segueix el dit
     pane.style.transform="translateX("+dx+"px)";
-    pane.style.opacity=String(Math.max(0.45,1-Math.abs(dx)/260));
   },{passive:false});
 
   const end=()=>{
     if(!on||!pane){ reset(); return; }
-    const p=pane, dir=dx<0?1:-1;
-    if(horiz&&Math.abs(dx)>46&&canGo(dir)){
-      const target=viewOffset+dir;
-      reset();
-      if(still()){ relax(p); gotoWeek(target); return; }
-      busy=true;
-      p.style.transition="transform 150ms var(--ease), opacity 150ms var(--ease)";
-      p.style.transform="translateX("+(dir>0?-70:70)+"px)";
-      p.style.opacity="0";
-      setTimeout(()=>{ busy=false; gotoWeek(target); },140);
-      return;
-    }
+    const p=pane, dir=dx<0?1:-1, go=horiz&&Math.abs(dx)>50&&canGo(dir);
     reset();
-    if(!horiz){ relax(p); return; }
-    p.style.transition="transform 220ms var(--ease-out), opacity 220ms var(--ease-out)";
-    p.style.transform="translateX(0)"; p.style.opacity="1";
-    setTimeout(()=>relax(p),240);
+    if(go){ changeWeek(viewOffset+dir,dx); return; }   // continua el mateix lliscament
+    if(!horiz){ relax(p); host.classList.remove("sliding"); return; }
+    p.style.transition="transform 220ms var(--ease-out)";
+    p.style.transform="translateX(0)";
+    setTimeout(()=>{ relax(p); host.classList.remove("sliding"); },240);
   };
   host.addEventListener("touchend",end);
   host.addEventListener("touchcancel",end);
