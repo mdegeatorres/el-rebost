@@ -211,8 +211,17 @@
   .pickhead{font-size:11.5px;color:var(--ink-muted);font-weight:700;padding:14px 4px 6px;}
   .pickempty{padding:18px 4px;color:var(--ink-muted);font-size:14px;}
   .faint{color:var(--ink-muted);opacity:0.72;font-size:11.5px;}
-  .todaycard{background:var(--accent);color:var(--accent-ink);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;box-shadow:var(--shadow);}
-  .todaycard .thead{font-size:11.5px;font-weight:700;letter-spacing:0.2px;opacity:0.75;margin-bottom:8px;}
+  .todaycard{background:var(--accent);color:var(--accent-ink);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;box-shadow:var(--shadow);transition:transform var(--dur-fast) var(--ease-out);}
+  .todaycard.tappable{cursor:pointer;}
+  .todaycard.tappable:active{transform:scale(.985);}
+  .todaycard .thead{font-size:11.5px;font-weight:700;letter-spacing:0.2px;opacity:0.75;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;line-height:16px;min-height:16px;}
+  .tback{display:inline-flex;align-items:center;gap:1px;font-weight:800;white-space:nowrap;flex-shrink:0;line-height:16px;}
+  .tback svg{width:13px;height:13px;stroke-width:2.4;}
+  .weekdays{display:block;}
+  .slide-next{animation:weekInNext 300ms var(--ease-out);}
+  .slide-prev{animation:weekInPrev 300ms var(--ease-out);}
+  @keyframes weekInNext{from{opacity:0;transform:translateX(26px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes weekInPrev{from{opacity:0;transform:translateX(-26px);}to{opacity:1;transform:translateX(0);}}
   .todaycard .tl{display:flex;align-items:baseline;gap:10px;padding:2px 0;}
   .todaycard .tlab{font-size:12px;opacity:0.75;width:46px;flex-shrink:0;}
   .todaycard .tval{font-size:15px;min-width:0;}
@@ -893,38 +902,51 @@ function slotText(id){
   return d?d.name:"— sense triar —";
 }
 
+// L'àpat d'avui es queda sempre a dalt, també mirant altres setmanes: així els
+// dies no ballen de lloc en canviar de setmana. Quan no som a la setmana actual
+// es pinta des d'aquesta còpia, perquè state.week ja és el de la setmana vista.
+let todaySnap=null;
 function todayCard(){
-  if(viewOffset!==0)return "";
   const i=(new Date().getDay()+6)%7;
   const afternoon=new Date().getHours()>=16;
-  const din=effSlot(i,"dinar"), sop=effSlot(i,"sopar");
-  const line=(lbl,id,big)=>{
-    const key=lockKey(i,lbl==="Dinar"?"dinar":"sopar");
-    const note=(state.notes&&state.notes[key])||"";
-    return '<div class="tl'+(big?" big":"")+'"><div class="tlab">'+lbl+'</div>'+
-      '<div class="tval">'+esc(id?slotText(id):"encara sense triar")+
-      (id===SOBRES&&note?' <span class="faint">('+esc(note)+')</span>':"")+'</div></div>';
-  };
-  return '<div class="todaycard"><div class="thead">Avui, '+DAYS[i].toLowerCase()+'</div>'+
-    (afternoon ? line("Sopar",sop,true)
-               : line("Dinar",din,true)+line("Sopar",sop,false))+'</div>';
+  if(viewOffset===0){
+    todaySnap={din:effSlot(i,"dinar"), sop:effSlot(i,"sopar"),
+      dinNote:(state.notes&&state.notes[lockKey(i,"dinar")])||"",
+      sopNote:(state.notes&&state.notes[lockKey(i,"sopar")])||""};
+  }
+  const s=todaySnap||{din:null,sop:null,dinNote:"",sopNote:""};
+  const line=(lbl,id,note,big)=>
+    '<div class="tl'+(big?" big":"")+'"><div class="tlab">'+lbl+'</div>'+
+    '<div class="tval">'+esc(id?slotText(id):"encara sense triar")+
+    (id===SOBRES&&note?' <span class="faint">('+esc(note)+')</span>':"")+'</div></div>';
+  const away=viewOffset!==0;
+  return '<div class="todaycard'+(away?" tappable":"")+'"'+
+      (away?' id="todayBack" role="button" tabindex="0"':"")+'>'+
+    '<div class="thead"><span>Avui, '+DAYS[i].toLowerCase()+'</span>'+
+    (away?'<span class="tback">Tornar-hi'+S.svg(S.right,"ic-sm")+'</span>':"")+'</div>'+
+    (afternoon ? line("Sopar",s.sop,s.sopNote,true)
+               : line("Dinar",s.din,s.dinNote,true)+line("Sopar",s.sop,s.sopNote,false))+'</div>';
 }
 function renderMenu(){
   const w=$("weekList");
   const editable=canEdit();
+  // La capçalera (àpat d'avui + navegador) té sempre la mateixa alçada; tot el
+  // que canvia de setmana a setmana va dins de .weekdays, que és el que llisca.
+  const slide=slideClass();
   let h=todayCard()+'<div class="weeknav">'+
     '<button class="wbtn" id="wPrev" '+(viewOffset<=-MAX_BACK?"disabled":"")+' aria-label="Setmana anterior">'+S.svg(S.left,"ic-sm")+'</button>'+
-    '<div class="wlabel"><div class="wl1">'+esc(weekLabel(viewMonday,viewOffset))+'</div>'+
+    '<div class="wlabel'+slide+'"><div class="wl1">'+esc(weekLabel(viewMonday,viewOffset))+'</div>'+
     '<div class="wl2">'+(viewOffset===0?esc(weekLabel(viewMonday,9)):(editable?"planificable":"només consulta"))+'</div></div>'+
     '<button class="wbtn" id="wNext" '+(viewOffset>=MAX_AHEAD?"disabled":"")+' aria-label="Setmana següent">'+S.svg(S.right,"ic-sm")+'</button></div>';
-  if(viewOffset!==0) h+='<button class="secondary" id="wToday" style="width:100%;margin-bottom:10px;">Tornar a aquesta setmana</button>';
-  if(!editable) h+='<div class="banner">Setmana ja passada: es guarda com a registre del que vau menjar i no es pot modificar.</div>'+
-    '<button class="secondary" id="wRepeat" style="width:100%;margin-bottom:10px;">'+S.svg(S.copy,"ic-sm")+'Repetir aquesta setmana</button>';
 
   if(!state.dishes.length){ w.innerHTML=h+'<div class="empty">Afegeix plats abans de generar el menú.</div>'; wireWeekNav(); return; }
+  let days="";
   DAYS.forEach((day,i)=>{
-    h+='<div class="day-card"><h3>'+day+'</h3>'+slotRow(i,"dinar","Dinar")+slotRow(i,"sopar","Sopar")+'</div>';
+    days+='<div class="day-card"><h3>'+day+'</h3>'+slotRow(i,"dinar","Dinar")+slotRow(i,"sopar","Sopar")+'</div>';
   });
+  if(!editable) days+='<div class="banner">Setmana ja passada: es guarda com a registre del que vau menjar i no es pot modificar.</div>'+
+    '<button class="secondary" id="wRepeat" style="width:100%;margin-bottom:10px;">'+S.svg(S.copy,"ic-sm")+'Repetir aquesta setmana</button>';
+  h+='<div class="weekdays'+slide+'">'+days+'</div>';
   w.innerHTML=h;
   wireWeekNav();
   $("btnGenerate").style.display=editable?"flex":"none";
@@ -933,7 +955,7 @@ function renderMenu(){
 function wireWeekNav(){
   if($("wPrev"))$("wPrev").addEventListener("click",()=>gotoWeek(viewOffset-1));
   if($("wNext"))$("wNext").addEventListener("click",()=>gotoWeek(viewOffset+1));
-  if($("wToday"))$("wToday").addEventListener("click",()=>gotoWeek(0));
+  if($("todayBack"))$("todayBack").addEventListener("click",()=>gotoWeek(0));
   if($("wRepeat"))$("wRepeat").addEventListener("click",askRepeatTarget);
 }
 
@@ -1042,8 +1064,17 @@ function toggleLock(i,slot){
   }
   DB.setLocks(locks).catch(showErr); renderMenu(); renderShop();
 }
+// Direcció del lliscament. La marca caduca sola: així un segon render del
+// mateix canvi (Firestore n'envia un per setmana i un per blocatges) encara
+// anima, però un render qualsevol posterior ja no.
+let weekSlide=0, weekSlideAt=0;
+function slideClass(){
+  if(!weekSlide||Date.now()-weekSlideAt>400)return "";
+  return weekSlide>0?" slide-next":" slide-prev";
+}
 function gotoWeek(off){
   off=Math.max(-MAX_BACK,Math.min(MAX_AHEAD,off));
+  if(off!==viewOffset){ weekSlide=off>viewOffset?1:-1; weekSlideAt=Date.now(); }
   viewOffset=off;
   viewMonday=addWeeks(mondayOf(new Date()),off);
   viewKey=weekKey(viewMonday);
