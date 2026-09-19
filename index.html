@@ -218,10 +218,12 @@
   .todaycard .thead{font-size:11.5px;font-weight:700;letter-spacing:0.2px;opacity:0.75;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;line-height:16px;min-height:16px;}
   .tback{display:inline-flex;align-items:center;gap:1px;font-weight:800;white-space:nowrap;flex-shrink:0;line-height:16px;}
   .tback svg{width:13px;height:13px;stroke-width:2.4;}
-  #weekList{position:relative;}
-  #weekList.sliding{overflow:hidden;}
+  /* overflow-x:clip retalla el que llisca sense crear context de format nou:
+     amb overflow:hidden el marge de l'última targeta deixava de col·lapsar i
+     els botons de sota feien un salt de 10 px cada cop que es canviava de setmana. */
+  #weekList{position:relative;overflow-x:clip;overflow-clip-margin:16px;}
   .weekdays{display:block;}
-  .weekdays.ghost{position:absolute;left:0;z-index:1;pointer-events:none;}
+  .weekdays.ghost{position:absolute;left:0;z-index:1;pointer-events:none;will-change:transform;}
   .slide-next{animation:weekInNext var(--dur-week) var(--ease-out);}
   .slide-prev{animation:weekInPrev var(--dur-week) var(--ease-out);}
   @keyframes weekInNext{from{transform:translateX(100%);}to{transform:translateX(0);}}
@@ -1073,7 +1075,15 @@ function toggleLock(i,slot){
 // Direcció del lliscament. La marca caduca sola: així un segon render del
 // mateix canvi (Firestore n'envia un per setmana i un per blocatges) encara
 // anima, però un render qualsevol posterior ja no.
-let weekSlide=0, weekSlideAt=0;
+let weekSlide=0, weekSlideAt=0, restTimer=null;
+// Les altres pestanyes no es veuen mentre la setmana llisca: refer-les un cop
+// acabada l'animació treu molta feina del primer fotograma, que és on es notava.
+function renderRest(){
+  clearTimeout(restTimer);
+  const run=()=>{ renderShop(); renderStats(); renderTabs(); };
+  if(Date.now()-weekSlideAt>400){ run(); return; }
+  restTimer=setTimeout(run,380);
+}
 function slideClass(){
   if(!weekSlide||Date.now()-weekSlideAt>400)return "";
   return weekSlide>0?" slide-next":" slide-prev";
@@ -1096,13 +1106,12 @@ function changeWeek(target,startX){
   ghost.style.top=top+"px";
   ghost.style.width=w+"px";
   ghost.style.transition="none";
-  ghost.style.transform="translateX("+(startX||0)+"px)";
-  host.classList.add("sliding");
+  ghost.style.transform="translate3d("+(startX||0)+"px,0,0)";
   host.appendChild(ghost);
   void ghost.offsetWidth;   // fixa la posició de sortida: si no, no hi ha transició
   ghost.style.transition="transform var(--dur-week) var(--ease-out)";
-  ghost.style.transform="translateX("+(dir>0?-w:w)+"px)";
-  setTimeout(()=>{ ghost.remove(); host.classList.remove("sliding"); },380);
+  ghost.style.transform="translate3d("+(dir>0?-w:w)+"px,0,0)";
+  setTimeout(()=>ghost.remove(),380);
 }
 function gotoWeek(off){
   off=Math.max(-MAX_BACK,Math.min(MAX_AHEAD,off));
@@ -1110,7 +1119,7 @@ function gotoWeek(off){
   viewOffset=off;
   viewMonday=addWeeks(mondayOf(new Date()),off);
   viewKey=weekKey(viewMonday);
-  if(mode==="local"){ loadWeekLocal(viewKey); renderMenu(); renderShop(); renderStats(); renderTabs(); }
+  if(mode==="local"){ loadWeekLocal(viewKey); renderMenu(); renderRest(); }
   else subscribeWeek();
 }
 
@@ -1122,7 +1131,7 @@ function wireWeekSwipe(){
   const canGo=d=>d>0?viewOffset<MAX_AHEAD:viewOffset>-MAX_BACK;
   let x0=0,y0=0,dx=0,pane=null,on=false,horiz=false;
 
-  const relax=p=>{ if(p){p.style.transition="";p.style.transform="";p.style.opacity="";p.style.animation="";} };
+  const relax=p=>{ if(p){p.style.transition="";p.style.transform="";p.style.opacity="";p.style.animation="";p.style.willChange="";} };
   const reset=()=>{ pane=null;on=false;horiz=false;dx=0; };
 
   host.addEventListener("touchstart",e=>{
@@ -1139,12 +1148,11 @@ function wireWeekSwipe(){
       if(Math.abs(y)>10&&Math.abs(y)>=Math.abs(x)){ on=false; return; }
       if(Math.abs(x)<10) return;
       horiz=true;
-      host.classList.add("sliding");
-      pane.style.animation="none"; pane.style.transition="none";
+      pane.style.animation="none"; pane.style.transition="none"; pane.style.willChange="transform";
     }
     e.preventDefault();
     dx=x*(canGo(x<0?1:-1)?1:0.18);              // el contingut segueix el dit
-    pane.style.transform="translateX("+dx+"px)";
+    pane.style.transform="translate3d("+dx+"px,0,0)";
   },{passive:false});
 
   const end=()=>{
@@ -1152,10 +1160,10 @@ function wireWeekSwipe(){
     const p=pane, dir=dx<0?1:-1, go=horiz&&Math.abs(dx)>50&&canGo(dir);
     reset();
     if(go){ changeWeek(viewOffset+dir,dx); return; }   // continua el mateix lliscament
-    if(!horiz){ relax(p); host.classList.remove("sliding"); return; }
+    if(!horiz){ relax(p); return; }
     p.style.transition="transform 220ms var(--ease-out)";
-    p.style.transform="translateX(0)";
-    setTimeout(()=>{ relax(p); host.classList.remove("sliding"); },240);
+    p.style.transform="translate3d(0,0,0)";
+    setTimeout(()=>relax(p),240);
   };
   host.addEventListener("touchend",end);
   host.addEventListener("touchcancel",end);
@@ -1802,11 +1810,11 @@ function subscribeWeek(){
     state.checked={}; (d.checked||[]).forEach(k=>state.checked[k]=true);
     state.extras=(d.extras||[]).map(n=>({name:n}));
     rememberWeek(key,state.week);
-    weekReady.week=true; renderMenu(); renderShop(); renderStats(); renderTabs(); maybeEnterNow();
+    weekReady.week=true; renderMenu(); renderRest(); maybeEnterNow();
   },onSyncError));
   unsubWeek.push(onSnapshot(doc(db,"houses",houseId,"locks",key),snap=>{
     state.locks=(snap.exists()&&snap.data().slots)?snap.data().slots:{};
-    weekReady.locks=true; renderMenu(); renderShop(); renderTabs(); maybeEnterNow();
+    weekReady.locks=true; renderMenu(); renderRest(); maybeEnterNow();
   },onSyncError));
 }
 let weekReady={week:false,locks:false};
