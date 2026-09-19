@@ -221,9 +221,9 @@
   /* overflow-x:clip retalla el que llisca sense crear context de format nou:
      amb overflow:hidden el marge de l'última targeta deixava de col·lapsar i
      els botons de sota feien un salt de 10 px cada cop que es canviava de setmana. */
-  #weekList{position:relative;overflow-x:clip;overflow-clip-margin:16px;}
+  #view-menu{position:relative;overflow-x:clip;overflow-clip-margin:16px;}
   .weekdays{display:block;}
-  .weekdays.ghost{position:absolute;left:0;z-index:1;pointer-events:none;will-change:transform;}
+  .weekdays.ghost{position:absolute;z-index:1;pointer-events:none;will-change:transform;}
   .slide-next{animation:weekInNext var(--dur-week) var(--ease-out);}
   .slide-prev{animation:weekInPrev var(--dur-week) var(--ease-out);}
   @keyframes weekInNext{from{transform:translateX(100%);}to{transform:translateX(0);}}
@@ -957,8 +957,7 @@ function renderMenu(){
   h+='<div class="weekdays'+slide+'">'+days+'</div>';
   w.innerHTML=h;
   wireWeekNav();
-  $("btnGenerate").style.display=editable?"flex":"none";
-  $("btnClearWeek").style.display=editable?"flex":"none";
+  setWeekActions(editable);
 }
 function wireWeekNav(){
   if($("wPrev"))$("wPrev").addEventListener("click",()=>changeWeek(viewOffset-1));
@@ -1075,7 +1074,19 @@ function toggleLock(i,slot){
 // Direcció del lliscament. La marca caduca sola: així un segon render del
 // mateix canvi (Firestore n'envia un per setmana i un per blocatges) encara
 // anima, però un render qualsevol posterior ja no.
-let weekSlide=0, weekSlideAt=0, restTimer=null;
+let weekSlide=0, weekSlideAt=0, restTimer=null, actionsTimer=null;
+// Generar/Netejar només existeixen a les setmanes planificables. Si el canvi
+// s'aplica enmig del lliscament, el botó verd apareix o marxa a mitja animació;
+// esperem que acabi perquè el canvi passi amb tot ja quiet.
+function setWeekActions(editable){
+  const apply=()=>{
+    $("btnGenerate").style.display=editable?"flex":"none";
+    $("btnClearWeek").style.display=editable?"flex":"none";
+  };
+  clearTimeout(actionsTimer);
+  if(Date.now()-weekSlideAt>400){ apply(); return; }
+  actionsTimer=setTimeout(apply,380);
+}
 // Les altres pestanyes no es veuen mentre la setmana llisca: refer-les un cop
 // acabada l'animació treu molta feina del primer fotograma, que és on es notava.
 function renderRest(){
@@ -1095,23 +1106,35 @@ function changeWeek(target,startX){
   target=Math.max(-MAX_BACK,Math.min(MAX_AHEAD,target));
   if(target===viewOffset)return;
   const dir=target>viewOffset?1:-1;
-  const host=$("weekList"), ghost=host.querySelector(".weekdays");
+  const host=$("weekList"), view=$("view-menu"), ghost=host.querySelector(".weekdays");
   const still=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(!ghost||still){ gotoWeek(target); return; }
-  const top=ghost.offsetTop, w=ghost.offsetWidth;
+  const gr=ghost.getBoundingClientRect(), vr=view.getBoundingClientRect();
+  const top=gr.top-vr.top, left=gr.left-vr.left, w=gr.width, h0=host.offsetHeight;
   gotoWeek(target);
+  const h1=host.offsetHeight;
+  // La còpia que marxa penja de la vista, no de #weekList: així sobreviu si el
+  // núvol torna a dibuixar la setmana mentre encara s'està animant.
   ghost.className="weekdays ghost";
-  ghost.style.animation="none";
-  ghost.style.opacity="";
-  ghost.style.top=top+"px";
-  ghost.style.width=w+"px";
-  ghost.style.transition="none";
-  ghost.style.transform="translate3d("+(startX||0)+"px,0,0)";
-  host.appendChild(ghost);
+  ghost.style.cssText="top:"+top+"px;left:"+left+"px;width:"+w+"px;"+
+    "transition:none;transform:translate3d("+(startX||0)+"px,0,0);";
+  view.appendChild(ghost);
   void ghost.offsetWidth;   // fixa la posició de sortida: si no, no hi ha transició
   ghost.style.transition="transform var(--dur-week) var(--ease-out)";
   ghost.style.transform="translate3d("+(dir>0?-w:w)+"px,0,0)";
-  setTimeout(()=>ghost.remove(),380);
+  // Si la setmana nova no fa la mateixa alçada, acompanya-la en comptes de
+  // fer un escaló que empenyi els botons de sota.
+  if(h0!==h1){
+    host.style.overflow="hidden";
+    host.style.height=h0+"px";
+    void host.offsetHeight;
+    host.style.transition="height var(--dur-week) var(--ease-out)";
+    host.style.height=h1+"px";
+  }
+  setTimeout(()=>{
+    ghost.remove();
+    host.style.transition=""; host.style.height=""; host.style.overflow="";
+  },380);
 }
 function gotoWeek(off){
   off=Math.max(-MAX_BACK,Math.min(MAX_AHEAD,off));
