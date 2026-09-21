@@ -2405,6 +2405,11 @@ if(location.hash.indexOf("#print=")===0){
 
 wireStaticUI();
 
+// Còpia local de l'app, perquè obri de seguida i funcioni sense cobertura.
+// Si falla, l'app tira igual: no hi ha res que en depengui.
+if("serviceWorker" in navigator)
+  navigator.serviceWorker.register("sw.js").catch(e=>console.warn("sw",e));
+
 if(!configured()){
   screenNoConfig();
 } else {
