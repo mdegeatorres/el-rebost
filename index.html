@@ -58,10 +58,9 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important;} }
-  html{scroll-behavior:smooth;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);}
-  body{min-height:100vh;overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
-  #app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);}
+  body{min-height:100vh;min-height:100dvh;overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;}
 
   svg.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block;}
   svg.ic-sm{width:17px;height:17px;}
@@ -90,6 +89,7 @@
   .dish-row .name{font-size:16px;font-weight:600;letter-spacing:-0.01em;transition:color var(--dur) var(--ease);}
   .dish-row .meta{font-size:12.5px;color:var(--ink-muted);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
   .pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:700;}
+  .pill.sopar{background:var(--spice-soft);color:var(--spice);}
   .icon-btn{border:none;background:transparent;color:var(--ink-muted);padding:7px;cursor:pointer;border-radius:8px;display:flex;align-items:center;transition:background-color var(--dur) var(--ease),color var(--dur) var(--ease),transform var(--dur-fast) var(--ease-out);}
   .icon-btn:active{background:var(--bg-alt);transform:scale(.92);}
 
@@ -108,9 +108,11 @@
   .day-card h3{font-size:12.5px;font-weight:700;letter-spacing:0.3px;color:var(--accent);margin:0 0 6px;}
   .slot{display:flex;align-items:center;gap:9px;padding:6px 0;}
   .slot .lbl{width:52px;flex-shrink:0;font-size:12.5px;color:var(--ink-muted);font-weight:600;}
-  .slot select{flex:1;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:14px;font-family:var(--font-body);min-width:0;transition:background-color .5s ease,border-color var(--dur) var(--ease);}
-  .slot.flash select{background:var(--spice-soft);transition:background 0.7s ease;}
-  .slot .reroll{background:none;border:none;color:var(--ink-muted);cursor:pointer;padding:5px;flex-shrink:0;display:flex;transition:color var(--dur) var(--ease),transform var(--dur-slow) var(--ease-out);}
+  .slotpick.flash{background:var(--spice-soft);border-color:var(--spice);}
+  .slot .reroll{background:none;border:none;color:var(--ink-muted);cursor:pointer;padding:5px;flex-shrink:0;display:flex;position:relative;transition:color var(--dur) var(--ease),transform var(--dur-slow) var(--ease-out);}
+  /* La diana tàctil creix sense moure res de lloc: la fila dels àpats va justa
+     d'amplada i dos botons de 27 px de costat són fàcils de fallar amb el dit. */
+  .slot .reroll::after,.lockbtn::after{content:"";position:absolute;inset:-11px -5px;}
   .slot .reroll:active{transform:rotate(180deg);}
 
   .item-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:opacity var(--dur-fast) var(--ease);}
@@ -129,7 +131,7 @@
   .shop-progress .count{font-size:12.5px;color:var(--ink-muted);white-space:nowrap;}
 
   .add-inline{display:flex;gap:8px;margin:8px 0 4px;}
-  .add-inline input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;font-size:14.5px;color:var(--ink);font-family:var(--font-body);min-width:0;transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
+  .add-inline input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:16px;color:var(--ink);font-family:var(--font-body);min-width:0;transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
   .add-inline button{background:var(--accent);color:var(--accent-ink);border:none;border-radius:var(--radius-sm);width:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform var(--dur-fast) var(--ease-out),filter var(--dur) var(--ease);}
   .add-inline button:active{transform:scale(.92);}
 
@@ -141,17 +143,17 @@
   @keyframes tabPop{0%{transform:scale(1);}45%{transform:scale(1.2);}100%{transform:scale(1);}}
   nav.tabs .badge{position:absolute;top:-1px;right:calc(50% - 20px);background:var(--spice);color:#fff;border-radius:99px;font-size:9.5px;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 
-  .sheet-backdrop{position:fixed;inset:0;background:rgba(20,26,18,0.4);z-index:10;opacity:0;visibility:hidden;transition:opacity var(--dur-slow) var(--ease),visibility var(--dur-slow);}
+  .sheet-backdrop{position:fixed;inset:0;touch-action:none;background:rgba(20,26,18,0.4);z-index:10;opacity:0;visibility:hidden;transition:opacity var(--dur-slow) var(--ease),visibility var(--dur-slow);}
   .sheet-backdrop.open{opacity:1;visibility:visible;}
   .sheet{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -8px 28px rgba(0,0,0,0.25);z-index:11;transform:translateY(105%);transition:transform 0.28s cubic-bezier(.32,.72,0,1);max-height:88vh;display:flex;flex-direction:column;}
   .sheet::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:5px;border-radius:99px;background:var(--line);}
   .sheet-backdrop.open .sheet{transform:translateY(0);}
   .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 8px;flex-shrink:0;touch-action:none;user-select:none;-webkit-user-select:none;}
   .sheet-head h2{font-family:var(--font-body);font-style:normal;font-weight:700;font-size:17px;letter-spacing:-0.01em;margin:0;}
-  .sheet-body{padding:4px 18px 22px;overflow-y:auto;}
+  .sheet-body{padding:4px 18px calc(22px + env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;}
   .field{margin-bottom:16px;}
   .field label{display:block;font-size:12.5px;color:var(--ink-muted);margin-bottom:6px;font-weight:600;}
-  .field input, .field textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;color:var(--ink);font-family:var(--font-body);transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
+  .field input, .field textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:16px;color:var(--ink);font-family:var(--font-body);transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
   .field textarea{min-height:120px;resize:vertical;line-height:1.5;}
   .field .hint{font-size:12px;color:var(--ink-muted);margin-top:6px;line-height:1.45;}
   .chips{display:flex;gap:2px;background:var(--bg-alt);border-radius:10px;padding:2px;}
@@ -162,6 +164,8 @@
 
   .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13.5px;font-weight:500;opacity:0;box-shadow:var(--shadow);transition:opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);z-index:30;max-width:82%;text-align:center;pointer-events:none;}
   .toast.show{opacity:1;transform:translate(-50%,0);}
+  .toast{display:flex;align-items:center;gap:14px;max-width:min(92%,420px);}
+  .toast-undo{background:none;border:none;color:var(--accent-soft);font:inherit;font-weight:800;cursor:pointer;padding:4px 0;flex-shrink:0;}
 
   /* Portes: càrrega, sessió, casa */
   #gate{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;}
@@ -172,7 +176,7 @@
   .gate-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:12px;}
   .gate-card h3{font-size:14px;margin:0 0 4px;letter-spacing:-0.01em;}
   .gate-card p{font-size:13px;color:var(--ink-muted);margin:0 0 12px;line-height:1.45;}
-  .gate-card input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;color:var(--ink);font-family:var(--font-body);margin-bottom:9px;transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
+  .gate-card input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;font-size:16px;color:var(--ink);font-family:var(--font-body);margin-bottom:9px;transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
   .linkish{background:none;border:none;color:var(--ink-muted);font-size:13.5px;text-decoration:underline;cursor:pointer;font-family:var(--font-body);padding:8px 0;display:block;margin:0 auto;transition:color var(--dur) var(--ease);}
   .gbtn{width:100%;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:var(--shadow);transition:transform var(--dur-fast) var(--ease-out),filter var(--dur) var(--ease);}
   .gbtn:active{transform:scale(.98);}
@@ -188,7 +192,7 @@
   .member .tag{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:2px 8px;flex-shrink:0;}
   .locked-name{flex:1;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;background:var(--accent-soft);color:var(--accent);border-radius:var(--radius-sm);padding:9px 10px;min-width:0;}
   .locked-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .lockbtn{background:none;border:none;color:var(--ink-muted);cursor:pointer;padding:5px;flex-shrink:0;display:flex;transition:color var(--dur) var(--ease),transform var(--dur-fast) var(--ease-out);}
+  .lockbtn{background:none;border:none;color:var(--ink-muted);cursor:pointer;padding:5px;flex-shrink:0;display:flex;position:relative;transition:color var(--dur) var(--ease),transform var(--dur-fast) var(--ease-out);}
   .lockbtn:active{transform:scale(.88);}
   .lockbtn.on{color:var(--accent);}
   .ac-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:0;}
@@ -210,7 +214,7 @@
   .slotpick:disabled{opacity:0.7;cursor:default;}
   .slotnote{font-size:12px;color:var(--ink-muted);padding:0 0 6px 62px;font-style:italic;}
   .searchbox{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:12px;color:var(--ink-muted);transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease);}
-  .searchbox input{flex:1;border:none;background:none;padding:11px 0;font-size:15px;color:var(--ink);font-family:var(--font-body);outline:none;min-width:0;}
+  .searchbox input{flex:1;border:none;background:none;padding:11px 0;font-size:16px;color:var(--ink);font-family:var(--font-body);outline:none;min-width:0;}
   /* La creu de sèrie del navegador només surt a l'escriptori; en posem una de
      pròpia que es vegi a tot arreu, i amaguem la nativa per no duplicar-la. */
   .searchbox input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;}
@@ -247,6 +251,9 @@
   .wlabel.slide-next,.wlabel.slide-prev{animation:labelIn var(--dur-week) var(--ease-out);}
   @keyframes labelIn{from{opacity:0;}to{opacity:1;}}
   .todaycard .tl{display:flex;align-items:baseline;gap:10px;padding:2px 0;}
+  .todaycard .tl.tappable{cursor:pointer;border-radius:10px;margin:0 -8px;padding:4px 8px;transition:background-color var(--dur) var(--ease);}
+  .todaycard .tl.tappable:active{background:rgba(255,255,255,0.14);}
+  .todaycard .tgo{margin-left:auto;opacity:0.5;align-self:center;flex-shrink:0;}
   .todaycard .tlab{font-size:12px;opacity:0.75;width:46px;flex-shrink:0;}
   .todaycard .tval{font-size:15px;min-width:0;}
   .todaycard .tl.big .tval{font-family:var(--font-body);font-style:normal;font-weight:700;font-size:19px;letter-spacing:-0.01em;line-height:1.25;}
@@ -631,11 +638,27 @@ function setPrintOrientation(o){
   try{ localStorage.setItem("rebostPrintOr",o); }catch(e){}
 }
 
-function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);
-  setTimeout(()=>t.classList.add("show"),10);setTimeout(()=>{t.classList.remove("show");setTimeout(()=>t.remove(),300);},2600);}
+// Un sol avís reaprofitat: abans se n'apilaven un sobre l'altre si feies dues
+// coses seguides. Amb `undo` surt un botó per desfer i dura una mica més.
+let toastEl=null, toastTimer=null;
+function hideToast(){ if(toastEl)toastEl.classList.remove("show"); }
+function toast(msg,undo){
+  if(!toastEl){ toastEl=document.createElement("div"); toastEl.className="toast"; document.body.appendChild(toastEl); }
+  toastEl.textContent="";
+  toastEl.style.pointerEvents=undo?"auto":"none";
+  const s=document.createElement("span"); s.textContent=msg; toastEl.appendChild(s);
+  if(undo){
+    const b=document.createElement("button"); b.className="toast-undo"; b.textContent="Desfés";
+    b.addEventListener("click",()=>{ hideToast(); undo(); });
+    toastEl.appendChild(b);
+  }
+  clearTimeout(toastTimer);
+  requestAnimationFrame(()=>toastEl.classList.add("show"));
+  toastTimer=setTimeout(hideToast, undo?6000:2600);
+}
 
 /* ===================== state ===================== */
-let history={};              // clau de setmana -> days[]  (per a "fa X setmanes", repetir i resum)
+let weekHistory={};              // clau de setmana -> days[]  (per a "fa X setmanes", repetir i resum)
 let mode="local";            // "local" | "cloud"
 let state=null, activeTab="menu", editingId=null;
 let auth=null, db=null, user=null, houseId=null, houseMeta=null, unsubs=[];
@@ -682,26 +705,32 @@ function hasLocalData(){ try{return !!localStorage.getItem(LKEY);}catch(e){retur
 function findDish(id){return state.dishes.find(d=>d.id===id)||null;}
 
 /* ===================== persistence layer ===================== */
-const H=()=>["houses",houseId];
 let viewOffset=0, viewMonday=mondayOf(new Date()), viewKey=weekKey(mondayOf(new Date()));
 const canEdit=()=>viewOffset>=0;
 
-function rememberWeek(key,days){ if(Array.isArray(days))history[key]=days; }
+function rememberWeek(key,days){ if(Array.isArray(days))weekHistory[key]=days; agoCache=null; }
 function pastKeys(){
   const now=mondayOf(new Date());
-  return Object.keys(history).filter(k=>mondayFromKey(k)<=now);
+  return Object.keys(weekHistory).filter(k=>mondayFromKey(k)<=now);
 }
-// Fa quantes setmanes que no es cuina: null si no consta mai.
-function weeksAgoFor(dishId){
-  let best=null;
+// Fa quantes setmanes que es va cuinar cada plat, tot en una sola passada per
+// l'historial. Abans es recorria l'historial sencer un cop per plat, i la
+// llista de plats es redibuixa a cada tecla del cercador.
+let agoCache=null;
+function weeksAgoMap(){
+  if(agoCache)return agoCache;
+  const m={}, avui=new Date();
   pastKeys().forEach(k=>{
-    const days=history[k]||[];
-    const found=days.some(d=>d&&(d.dinar===dishId||d.sopar===dishId));
-    if(!found)return;
-    const diff=weeksBetween(new Date(),mondayFromKey(k));
-    if(best===null||diff<best)best=diff;
+    const diff=weeksBetween(avui,mondayFromKey(k));
+    (weekHistory[k]||[]).forEach(d=>{
+      if(!d)return;
+      ["dinar","sopar"].forEach(s=>{
+        const id=d[s]; if(!id)return;
+        if(m[id]===undefined||diff<m[id])m[id]=diff;
+      });
+    });
   });
-  return best;
+  return (agoCache=m);
 }
 function agoLabel(n){
   if(n===null)return "encara no l'has cuinat";
@@ -721,6 +750,7 @@ function loadWeekLocal(key){
   state.checked={}; (w.checked||[]).forEach(k=>state.checked[k]=true);
   state.extras=(w.extras||[]).map(n=>({name:n}));
   state.locks=w.locks||{};
+  invalidate();
 }
 function saveWeekLocal(){
   state.weeks=state.weeks||{};
@@ -802,6 +832,8 @@ const DB={
     await b.commit();
   }
 };
+// Qualsevol escriptura llença els càlculs desats: així no cal recordar-ho a cada lloc.
+Object.keys(DB).forEach(k=>{ const f=DB[k]; DB[k]=(...a)=>{ invalidate(); return f(...a); }; });
 
 /* ===================== ingredients & shopping ===================== */
 const CATS=[
@@ -855,6 +887,14 @@ function displayQty(fam,base){
   if(fam==="@vol") return base>=1000?{q:round3(base/1000),u:"l"} :{q:round3(base),u:"ml"};
   return {q:round3(base),u:fam};
 }
+// La llista de la compra la demanen la pantalla de la compra i el comptador de
+// la pestanya: es calculava dues vegades a cada acció. Ara es calcula un cop i
+// es llença quan canvia alguna cosa que hi entra.
+let listCache=null;
+// Plats i Resum surten de les dades, no d'una pantalla concreta: qualsevol
+// canvi els deixa pendents de refer encara que ara no els estiguis mirant.
+const invalidate=()=>{ listCache=null; agoCache=null; stale.dishes=true; stale.stats=true; };
+function shoppingList(){ return listCache||(listCache=buildList()); }
 function buildList(){
   const g={};
   const add=(name,unit,qty,src,ref)=>{
@@ -887,38 +927,29 @@ let dishQuery="";
 function renderDishes(){
   const w=$("dishList");
   if(!state.dishes.length){w.innerHTML='<div class="empty">Encara no hi ha cap plat.<br>Toca el botó + per afegir-ne un.</div>';return;}
-  const searchBox='<div class="searchbox">'+S.svg(S.search,"ic-sm")+
+  // El cercador es dibuixa un sol cop: refer-lo a cada tecla feia perdre el
+  // focus i obligava a recol·locar el cursor a mà.
+  w.innerHTML='<div class="searchbox">'+S.svg(S.search,"ic-sm")+
     '<input type="search" id="dishSearch" placeholder="Cercar plat o ingredient" value="'+esc(dishQuery)+'">'+
-    (dishQuery?'<button type="button" class="clearbtn" id="dishClear" aria-label="Esborrar la cerca">'+S.svg(S.close,"ic-sm")+'</button>':"")+
-    '</div>';
-  const nq=norm(dishQuery);
-  const list=[...state.dishes].filter(d=>!nq||norm(d.name).includes(nq)||d.ingredients.some(x=>norm(x).includes(nq)));
-  if(!list.length){
-    w.innerHTML=searchBox+'<div class="empty">Cap plat amb «'+esc(dishQuery)+'».</div>';
-    wireDishSearch(); return;
-  }
-  w.innerHTML=searchBox+list.sort((a,b)=>a.name.localeCompare(b.name,"ca")).map(d=>{
-    const tags=d.slots.map(s=>'<span class="pill">'+(s==="dinar"?"Dinar":"Sopar")+'</span>').join(" ");
+    '<button type="button" class="clearbtn" id="dishClear" aria-label="Esborrar la cerca"'+(dishQuery?"":" hidden")+'>'+S.svg(S.close,"ic-sm")+'</button>'+
+    '</div><div id="dishRows"></div>';
+  renderDishRows();
+  const inp=$("dishSearch"), cl=$("dishClear");
+  inp.addEventListener("input",()=>{ dishQuery=inp.value; cl.hidden=!dishQuery; renderDishRows(); });
+  cl.addEventListener("click",()=>{ dishQuery=""; inp.value=""; cl.hidden=true; renderDishRows(); inp.focus(); });
+}
+function renderDishRows(){
+  const box=$("dishRows"); if(!box)return;
+  const nq=norm(dishQuery), ago=weeksAgoMap();
+  const list=state.dishes.filter(d=>!nq||norm(d.name).includes(nq)||d.ingredients.some(x=>norm(x).includes(nq)));
+  if(!list.length){ box.innerHTML='<div class="empty">Cap plat amb «'+esc(dishQuery)+'».</div>'; return; }
+  box.innerHTML=[...list].sort((a,b)=>a.name.localeCompare(b.name,"ca")).map(d=>{
+    const tags=d.slots.map(s=>'<span class="pill '+s+'">'+(s==="dinar"?"Dinar":"Sopar")+'</span>').join(" ");
     return '<div class="card dish-row" data-open="'+d.id+'"><div><div class="name">'+esc(d.name)+'</div>'+
            '<div class="meta">'+tags+'<span>'+d.ingredients.length+' ingredients</span>'+
-           '<span class="faint">'+esc(agoLabel(weeksAgoFor(d.id)))+'</span></div></div>'+
+           '<span class="faint">'+esc(agoLabel(ago[d.id]===undefined?null:ago[d.id]))+'</span></div></div>'+
            '<div class="icon-btn">'+S.svg(S.pencil)+'</div></div>';
   }).join("");
-  wireDishSearch();
-}
-function wireDishSearch(){
-  const inp=$("dishSearch"); if(!inp)return;
-  inp.addEventListener("input",()=>{
-    dishQuery=inp.value;
-    const pos=inp.selectionStart;
-    renderDishes();
-    const n=$("dishSearch"); if(n){n.focus();n.setSelectionRange(pos,pos);}
-  });
-  const cl=$("dishClear");
-  if(cl)cl.addEventListener("click",()=>{
-    dishQuery=""; renderDishes();
-    const n=$("dishSearch"); if(n)n.focus();
-  });
 }
 const lockKey=(i,slot)=>i+"-"+slot;
 function isOwner(){ return mode==="local" || !!(houseMeta&&user&&houseMeta.createdBy===user.uid); }
@@ -947,11 +978,16 @@ function todayCard(){
       sopNote:(state.notes&&state.notes[lockKey(i,"sopar")])||""};
   }
   const s=todaySnap||{din:null,sop:null,dinNote:"",sopNote:""};
-  const line=(lbl,id,note,big)=>
-    '<div class="tl'+(big?" big":"")+'"><div class="tlab">'+lbl+'</div>'+
-    '<div class="tval">'+esc(id?slotText(id):"encara sense triar")+
-    (id===SOBRES&&note?' <span class="faint">('+esc(note)+')</span>':"")+'</div></div>';
   const away=viewOffset!==0;
+  // A la setmana d'ara, cada línia porta directament al selector d'aquell àpat:
+  // és el gest que més es repeteix, i abans calia baixar a buscar el dia.
+  const line=(lbl,id,note,big)=>{
+    const pick=!away?' data-pick="'+lockKey(i,lbl==="Dinar"?"dinar":"sopar")+'"':"";
+    return '<div class="tl'+(big?" big":"")+(pick?" tappable":"")+'"'+pick+'><div class="tlab">'+lbl+'</div>'+
+      '<div class="tval">'+esc(id?slotText(id):"encara sense triar")+
+      (id===SOBRES&&note?' <span class="faint">('+esc(note)+')</span>':"")+'</div>'+
+      (pick?'<div class="tgo">'+S.svg(S.right,"ic-sm")+'</div>':"")+'</div>';
+  };
   return '<div class="todaycard'+(away?" tappable":"")+'"'+
       (away?' id="todayBack" role="button" tabindex="0"':"")+'>'+
     '<div class="thead"><span>Avui, '+DAYS[i].toLowerCase()+'</span>'+
@@ -1093,7 +1129,7 @@ function toggleLock(i,slot){
     if(!id){ toast("Tria primer un plat per a aquest àpat"); return; }
     locks[key]=id; toast("Àpat blocat: ningú més el pot canviar");
   }
-  DB.setLocks(locks).catch(showErr); renderMenu(); renderShop();
+  DB.setLocks(locks).catch(showErr); render("menu","shop","tabs");
 }
 // Direcció del lliscament. La marca caduca sola: així un segon render del
 // mateix canvi (Firestore n'envia un per setmana i un per blocatges) encara
@@ -1115,7 +1151,7 @@ function setWeekActions(editable){
 // acabada l'animació treu molta feina del primer fotograma, que és on es notava.
 function renderRest(){
   clearTimeout(restTimer);
-  const run=()=>{ renderShop(); renderStats(); renderTabs(); };
+  const run=()=>render("shop","stats","tabs");
   if(Date.now()-weekSlideAt>400){ run(); return; }
   restTimer=setTimeout(run,380);
 }
@@ -1173,7 +1209,7 @@ function gotoWeek(off){
   viewOffset=off;
   viewMonday=addWeeks(mondayOf(new Date()),off);
   viewKey=weekKey(viewMonday);
-  if(mode==="local"){ loadWeekLocal(viewKey); renderMenu(); renderRest(); }
+  if(mode==="local"){ loadWeekLocal(viewKey); invalidate(); render("menu"); renderRest(); }
   else subscribeWeek();
 }
 
@@ -1230,11 +1266,21 @@ function wireSheetDrag(){
    ancorat al fons real de la pantalla, tapat. visualViewport sí que ens diu
    quina part es veu, així que hi apugem el full i li limitem l'alçada perquè
    la llista es pugui recórrer sense haver de tancar el teclat. */
+let sheetFit="";
 function fitSheets(){
   const vv=window.visualViewport; if(!vv||vv.height<200)return;
+  // visualViewport dispara molt sovint en desplaçar: si no hi ha cap full obert
+  // o el resultat seria el mateix, no toquem res.
+  if(!document.querySelector(".sheet-backdrop.open")){
+    // Res obert: es tornen als valors del full d'estil, que si no un full es
+    // podria quedar apujat per un teclat que ja s'ha tancat.
+    if(sheetFit){ sheetFit=""; document.querySelectorAll(".sheet").forEach(s=>{s.style.bottom="";s.style.maxHeight="";}); }
+    return;
+  }
   const tapat=Math.round(window.innerHeight-vv.height-vv.offsetTop);
   const puja=tapat>80?tapat:0;      // 80 px: prou per no confondre-ho amb una barra del navegador
   const alt=Math.round(vv.height*0.88);
+  const ara=puja+"|"+alt; if(ara===sheetFit)return; sheetFit=ara;
   document.querySelectorAll(".sheet").forEach(s=>{
     s.style.bottom=puja+"px";
     s.style.maxHeight=alt+"px";
@@ -1297,8 +1343,9 @@ function openPicker(key){
   $("pickSearch").value=""; $("pickClear").hidden=true;
   $("pickNote").value=(state.notes&&state.notes[key])||"";
   renderPickList("");
+  // Sense enfocar el cercador: el teclat tapava mig full cada cop que tocaves
+  // un àpat, quan gairebé sempre el plat ja es veu a la llista.
   $("pickerBackdrop").classList.add("open");
-  setTimeout(()=>$("pickSearch").focus(),260);
 }
 function renderPickList(q){
   if(!pickSlot)return;
@@ -1336,7 +1383,7 @@ function choosePick(value){
     DB.setLocks(locks).catch(showErr);
   }
   $("pickerBackdrop").classList.remove("open");
-  renderMenu(); renderShop(); renderTabs();
+  render("menu","shop","tabs");
 }
 
 /* ---------- Bàsics ---------- */
@@ -1363,7 +1410,7 @@ function renderBasics(){
 /* ---------- Llista de la compra ---------- */
 function renderShop(){
   const w=$("shopWrap"); if(!w)return;
-  const items=buildList();
+  const items=shoppingList();
   const editable=canEdit();
   const addBox=editable?('<div class="add-inline"><input type="text" id="extraInput" placeholder="Afegir article a la llista">'+
                '<button id="extraBtn" aria-label="Afegir">'+S.svg(S.plus,"ic-sm")+'</button></div>'):"";
@@ -1391,18 +1438,18 @@ function renderShop(){
   h+=addBox+'<div class="row-actions">'+(editable?'<button class="secondary" id="btnUncheck" style="flex:1;">Desmarcar tot</button>':"")+
      '<button class="secondary" id="btnShareList" style="flex:1;">'+S.svg(S.share,"ic-sm")+'Compartir</button></div>'+
      (editable?'<div class="row-actions"><button class="secondary" id="btnDone" style="flex:1;">'+S.svg(S.check,"ic-sm")+'Compra feta</button></div>':"")+
-     '<div class="row-actions"><button class="secondary" id="btnCatOrder" style="flex:1;">'+S.svg(S.grip,"ic-sm")+'Ordre de les seccions</button></div>';
+     '<button class="linkish" id="btnCatOrder">Ordre de les seccions</button>';
   w.innerHTML=h;
   w.querySelectorAll(".item-row").forEach(r=>r.addEventListener("click",e=>{
     if(!editable)return;
     if(e.target.closest("[data-delextra]"))return;
     const k=decodeURIComponent(r.getAttribute("data-key"));
-    DB.setChecked(k,!state.checked[k]).catch(showErr); renderShop(); renderTabs();
+    DB.setChecked(k,!state.checked[k]).catch(showErr); render("shop","tabs");
   }));
   w.querySelectorAll("[data-delextra]").forEach(b=>b.addEventListener("click",e=>{
-    e.stopPropagation(); DB.removeExtra(b.getAttribute("data-delextra")).catch(showErr); renderShop(); renderTabs();
+    e.stopPropagation(); DB.removeExtra(b.getAttribute("data-delextra")).catch(showErr); render("shop","tabs");
   }));
-  if($("btnUncheck"))$("btnUncheck").addEventListener("click",()=>{DB.clearChecked().catch(showErr);renderShop();renderTabs();});
+  if($("btnUncheck"))$("btnUncheck").addEventListener("click",()=>{DB.clearChecked().catch(showErr);render("shop","tabs");});
   $("btnShareList").addEventListener("click",()=>shareList(items));
   if($("btnDone"))$("btnDone").addEventListener("click",finishShopping);
   $("btnCatOrder").addEventListener("click",openCatOrder);
@@ -1410,18 +1457,33 @@ function renderShop(){
 }
 function wireExtras(){
   const btn=$("extraBtn"), inp=$("extraInput"); if(!btn||!inp)return;
-  const go=()=>{const v=inp.value.trim();if(!v)return;DB.addExtra(v.toLowerCase()).catch(showErr);inp.value="";renderShop();renderTabs();};
+  // Es torna a enfocar el camp per poder-ne encadenar uns quants seguits.
+  const go=()=>{const v=inp.value.trim();if(!v)return;DB.addExtra(v.toLowerCase()).catch(showErr);
+    render("shop","tabs");const n=$("extraInput");if(n){n.value="";n.focus();}};
   btn.addEventListener("click",go);
   inp.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
 }
 function finishShopping(){
-  const items=buildList();
+  const items=shoppingList();
   const basics=[], extras=[]; let n=0;
   items.forEach(it=>{ if(state.checked[it.key]){ n++;
     if(it.src==="basic")basics.push(it.ref); if(it.src==="extra")extras.push(it.ref); } });
+  const abans={checked:{...state.checked}, need:state.basics.filter(b=>b.need).map(b=>b.id)};
   DB.finishShopping(basics,extras).catch(showErr);
-  renderShop(); renderBasics(); renderTabs();
-  toast(n?"Compra feta — "+n+" articles buidats":"Llista buidada");
+  render("shop","basics","tabs");
+  toast(n?"Compra feta — "+n+" articles buidats":"Llista buidada", ()=>undoShopping(abans,extras));
+}
+async function undoShopping(abans,extres){
+  try{
+    for(const id of abans.need){
+      const b=state.basics.find(x=>x.id===id);
+      if(b&&!b.need) await DB.saveBasic({...b,need:true});
+    }
+    for(const n of extres) await DB.addExtra(n);
+    for(const k of Object.keys(abans.checked)) await DB.setChecked(k,true);
+    render("shop","basics","tabs");
+    toast("Compra recuperada");
+  }catch(e){ showErr(e); }
 }
 
 /* ---------- ordenar les seccions del súper, arrossegant ---------- */
@@ -1506,9 +1568,18 @@ function generateWeek(){
     if(d){week[i][slot]=d.id;used.push(d.id);d.lastUsed=now;
       if(!touched.some(t=>t.id===d.id))touched.push({id:d.id,lastUsed:now});}
   });
+  const abans=state.week.map(x=>({...x}));
   DB.setWeek(week,touched).catch(showErr);
-  renderMenu(); renderShop(); renderTabs();
-  document.querySelectorAll(".slot").forEach((r,k)=>setTimeout(()=>{r.classList.add("flash");setTimeout(()=>r.classList.remove("flash"),700);},k*45));
+  render("menu","shop","tabs");
+  flashSlots();
+  if(abans.some(d=>d.dinar||d.sopar))
+    toast("Setmana generada",()=>{ DB.setWeek(abans,[]).catch(showErr); render("menu","shop","tabs"); toast("Setmana recuperada"); });
+}
+// Repassada en cascada pels àpats acabats de triar.
+function flashSlots(){
+  document.querySelectorAll("#weekList .slotpick").forEach((r,k)=>setTimeout(()=>{
+    r.classList.add("flash"); setTimeout(()=>r.classList.remove("flash"),600);
+  },k*40));
 }
 function reroll(i,slot){
   if(!canEdit())return;
@@ -1519,7 +1590,7 @@ function reroll(i,slot){
   const d=pickDish(pool,used); if(!d)return;
   const week=state.week.map(x=>({...x})); week[i][slot]=d.id; d.lastUsed=Date.now();
   DB.setWeek(week,[{id:d.id,lastUsed:d.lastUsed}]).catch(showErr);
-  renderMenu(); renderShop(); renderTabs();
+  render("menu","shop","tabs");
 }
 
 /* ===================== sharing ===================== */
@@ -1624,7 +1695,9 @@ function openSheet(id){
   $("btnDeleteDish").style.display=d?"block":"none";
   $("acChips").innerHTML=""; $("acWarn").style.display="none";
   $("sheetBackdrop").classList.add("open");
-  setTimeout(()=>$("fieldName").focus(),250);
+  // Només en un plat nou: editant-ne un que ja existeix, el més normal és
+  // venir a mirar o a tocar els ingredients, no a reescriure'n el nom.
+  if(!d) setTimeout(()=>$("fieldName").focus(),250);
 }
 const closeSheet=()=>{$("sheetBackdrop").classList.remove("open");editingId=null;};
 function saveDish(){
@@ -1660,23 +1733,38 @@ const TABS=[
   {k:"stats",t:"Resum",ic:"chart",sub:"què heu menjat de debò"}
 ];
 function renderTabs(){
-  let pending=0; try{pending=buildList().filter(it=>!state.checked[it.key]).length;}catch(e){}
+  let pending=0; try{pending=shoppingList().filter(it=>!state.checked[it.key]).length;}catch(e){}
   $("tabbar").innerHTML=TABS.map(t=>{
     const badge=(t.k==="shop"&&pending)?'<span class="badge">'+pending+'</span>':"";
     return '<button data-tab="'+t.k+'" class="'+(activeTab===t.k?"active":"")+'">'+badge+S.svg(S[t.ic],"ic-lg")+t.t+'</button>';
   }).join("");
   $("tabbar").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>switchTab(b.getAttribute("data-tab"))));
 }
+// Cada pestanya recorda on l'havies deixada: tornar a la llista de la compra
+// i trobar-te a dalt de tot és una de les coses que més cansen amb l'ús.
+const tabScroll={};
 function switchTab(k){
+  if(activeTab)tabScroll[activeTab]=window.scrollY;
   activeTab=k;
-  if(k==="stats")renderStats();
+  if(stale[k]){ stale[k]=false; VIEWS[k](); }
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   $("view-"+k).classList.add("active");
   $("subtitle").textContent=TABS.find(x=>x.k===k).sub;
   $("fabAdd").style.display=(k==="dishes")?"flex":"none";
-  renderTabs(); window.scrollTo(0,0);
+  renderTabs();
+  window.scrollTo(0,tabScroll[k]||0);
 }
-function renderAll(){ renderDishes(); renderMenu(); renderBasics(); renderShop(); renderStats(); renderTabs(); }
+/* Només es dibuixa la pestanya que es veu. Les altres queden marcades i es
+   dibuixen en entrar-hi: abans qualsevol acció refeia les cinc pantalles. */
+const VIEWS={dishes:renderDishes,menu:renderMenu,basics:renderBasics,shop:renderShop,stats:renderStats};
+const stale={dishes:true,menu:true,basics:true,shop:true,stats:true};
+function render(...views){
+  let tabs=false;
+  views.forEach(v=>{ if(v==="tabs")tabs=true; else stale[v]=true; });
+  if(stale[activeTab]){ stale[activeTab]=false; VIEWS[activeTab](); }
+  if(tabs)renderTabs();
+}
+function renderAll(){ invalidate(); render("dishes","menu","basics","shop","stats","tabs"); }
 
 /* ===================== Resum ===================== */
 function statsData(){
@@ -1684,7 +1772,7 @@ function statsData(){
   const counts={}, dayCount={}, slotCount={dinar:0,sopar:0};
   let meals=0, sobres=0, empty=0, fullWeeks=0;
   keys.forEach(k=>{
-    const days=history[k]||[]; let filled=0;
+    const days=weekHistory[k]||[]; let filled=0;
     days.forEach((d,i)=>["dinar","sopar"].forEach(slot=>{
       const id=d?d[slot]:null;
       if(!id){empty++;return;}
@@ -1797,14 +1885,20 @@ async function doGoogleLogin(){
       : "No s'ha pogut entrar ("+(err.code||"error")+").");
   }
 }
-function startLocal(){
-  mode="local"; state=loadLocal(); houseMeta=null;
+// Si has triat treballar només en aquest dispositiu, no cal tornar-ho a dir a
+// cada obertura. S'oblida quan entres amb un compte o tanques la sessió.
+const LOCALFLAG="rebostLocal";
+const setLocalPref=v=>{ try{ v?localStorage.setItem(LOCALFLAG,"1"):localStorage.removeItem(LOCALFLAG); }catch(e){} };
+const wantsLocal=()=>{ try{ return localStorage.getItem(LOCALFLAG)==="1"; }catch(e){ return false; } };
+
+function startLocal(auto){
+  mode="local"; state=loadLocal(); houseMeta=null; setLocalPref(true);
   viewOffset=0; viewMonday=mondayOf(new Date()); viewKey=weekKey(viewMonday);
   loadWeekLocal(viewKey);
-  history={}; Object.keys(state.weeks||{}).forEach(k=>rememberWeek(k,(state.weeks[k]||{}).days));
+  weekHistory={}; Object.keys(state.weeks||{}).forEach(k=>rememberWeek(k,(state.weeks[k]||{}).days));
   $("houseBtn").innerHTML=S.svg(S.home,"ic-sm")+'<span>Local</span>';
   enterApp();
-  toast("Mode local: les dades es queden en aquest dispositiu");
+  if(!auto) toast("Mode local: les dades es queden en aquest dispositiu");
 }
 
 function screenHouse(houses,msg){
@@ -1928,11 +2022,11 @@ function subscribeWeek(){
     state.checked={}; (d.checked||[]).forEach(k=>state.checked[k]=true);
     state.extras=(d.extras||[]).map(n=>({name:n}));
     rememberWeek(key,state.week);
-    weekReady.week=true; renderMenu(); renderRest(); maybeEnterNow();
+    weekReady.week=true; invalidate(); render("menu"); renderRest(); maybeEnterNow();
   },onSyncError));
   unsubWeek.push(onSnapshot(doc(db,"houses",houseId,"locks",key),snap=>{
     state.locks=(snap.exists()&&snap.data().slots)?snap.data().slots:{};
-    weekReady.locks=true; renderMenu(); renderRest(); maybeEnterNow();
+    weekReady.locks=true; invalidate(); render("menu"); renderRest(); maybeEnterNow();
   },onSyncError));
 }
 let weekReady={week:false,locks:false};
@@ -1942,9 +2036,9 @@ function maybeEnterNow(){ if(enterFn)enterFn(); }
 async function loadHistory(){
   try{
     const snap=await getDocs(collection(db,"houses",houseId,"weeks"));
-    history={};
+    weekHistory={};
     snap.docs.forEach(d=>rememberWeek(d.id,d.data().days));
-    renderDishes(); renderStats();
+    render("dishes","stats");
   }catch(e){ console.warn("historial",e); }
 }
 
@@ -1992,7 +2086,7 @@ function openHouse(hid){
     }
     houseMeta={id:hid,...s.data()};
     $("houseBtn").innerHTML=S.svg(S.home,"ic-sm")+'<span>'+esc(houseMeta.name)+'</span>';
-    renderMenu(); renderShop();
+    render("menu","shop");
     if(houseInit)return;
     houseInit=true;
     setDoc(doc(db,"users",user.uid),{current:hid},{merge:true}).catch(()=>{});
@@ -2010,12 +2104,12 @@ function openHouse(hid){
 
   unsubs.push(onSnapshot(collection(db,...H,"dishes"),snap=>{
     state.dishes=snap.docs.map(d=>{const x=d.data();return {id:d.id,name:x.name||"",slots:x.slots||["dinar","sopar"],ingredients:x.ingredients||[],lastUsed:x.lastUsed??null};});
-    ready.dishes=true; renderDishes(); renderMenu(); renderShop(); renderTabs(); maybeEnterNow();
+    ready.dishes=true; invalidate(); render("dishes","menu","shop","tabs"); maybeEnterNow();
   },onSyncError));
 
   unsubs.push(onSnapshot(collection(db,...H,"basics"),snap=>{
     state.basics=snap.docs.map(d=>({id:d.id,...d.data()}));
-    ready.basics=true; renderBasics(); renderShop(); renderTabs(); maybeEnterNow();
+    ready.basics=true; invalidate(); render("basics","shop","tabs"); maybeEnterNow();
   },onSyncError));
 
   subscribeWeek();
@@ -2034,7 +2128,7 @@ function openHouseSheet(){
     $("houseBody").innerHTML=`
       <div class="banner">Estàs en mode local: les dades només són en aquest dispositiu i no es sincronitzen.</div>
       <button class="primary" id="hsLogin" style="width:100%;">Entrar amb un compte i sincronitzar</button>`;
-    $("hsLogin").addEventListener("click",()=>{$("houseBackdrop").classList.remove("open");screenLogin();});
+    $("hsLogin").addEventListener("click",()=>{setLocalPref(false);$("houseBackdrop").classList.remove("open");screenLogin();});
   } else {
     const owner=isOwner();
     $("houseBody").innerHTML=`
@@ -2210,9 +2304,13 @@ function wireStaticUI(){
   $("dishList").addEventListener("click",e=>{const o=e.target.closest("[data-open]");if(o)openSheet(o.getAttribute("data-open"));});
   $("btnGenerate").addEventListener("click",generateWeek);
   $("btnClearWeek").addEventListener("click",()=>{
+    const abans=state.week.map(x=>({...x})), notesAbans={...(state.notes||{})};
+    if(!abans.some(d=>d.dinar||d.sopar)){ toast("La setmana ja era buida"); return; }
     const w=newWeek();
     for(let i=0;i<7;i++)["dinar","sopar"].forEach(s=>{if(lockedId(i,s))w[i][s]=state.week[i][s];});
-    DB.setWeek(w,[]).catch(showErr);renderMenu();renderShop();renderTabs();});
+    DB.setWeek(w,[],{}).catch(showErr); render("menu","shop","tabs");
+    toast("Setmana buidada",()=>{ DB.setWeek(abans,[],notesAbans).catch(showErr); render("menu","shop","tabs"); toast("Setmana recuperada"); });
+  });
   $("btnShareWeek").addEventListener("click",shareWeek);
   $("wPrint").addEventListener("click",printWeek);
   $("orderClose").innerHTML=S.svg(S.close);
@@ -2245,12 +2343,12 @@ function wireStaticUI(){
   }
   $("basicsList").addEventListener("click",e=>{
     const del=e.target.closest("[data-delbasic]");
-    if(del){e.stopPropagation();DB.deleteBasic(del.getAttribute("data-delbasic")).catch(showErr);renderBasics();renderShop();renderTabs();return;}
+    if(del){e.stopPropagation();DB.deleteBasic(del.getAttribute("data-delbasic")).catch(showErr);render("basics","shop","tabs");return;}
     const addb=e.target.closest("[data-addbtn]");
     if(addb){addBasicFrom(addb.getAttribute("data-addbtn"));return;}
     const row=e.target.closest("[data-basic]");
     if(row){const b=state.basics.find(x=>x.id===row.getAttribute("data-basic"));
-      if(b){DB.saveBasic({...b,need:!b.need}).catch(showErr);renderBasics();renderShop();renderTabs();}}
+      if(b){DB.saveBasic({...b,need:!b.need}).catch(showErr);render("basics","shop","tabs");}}
   });
   $("basicsList").addEventListener("keydown",e=>{
     if(e.key==="Enter"&&e.target.hasAttribute("data-addbasic"))addBasicFrom(e.target.getAttribute("data-addbasic"));
@@ -2260,7 +2358,11 @@ function addBasicFrom(group){
   const inp=document.querySelector('[data-addbasic="'+group+'"]');
   const v=inp.value.trim(); if(!v)return;
   DB.saveBasic({id:uid("b"),name:v.toLowerCase(),group,need:false}).catch(showErr);
-  inp.value=""; renderBasics(); renderTabs();
+  render("basics","tabs");
+  // El camp es torna a crear en redibuixar: el busquem de nou i hi deixem el
+  // cursor, que si no cal tornar-hi a tocar per cada cosa que afegeixes.
+  const n=document.querySelector('[data-addbasic="'+group+'"]');
+  if(n){ n.value=""; n.focus(); }
 }
 
 function configured(){
@@ -2297,7 +2399,7 @@ if(location.hash.indexOf("#print=")===0 && !standalone){
 // Si l'app de la pantalla d'inici ha acabat amb l'adreça d'impressió,
 // la netegem i arrenquem amb normalitat.
 if(location.hash.indexOf("#print=")===0){
-  try{ history.replaceState(null,"",location.pathname+location.search); }
+  try{ window.history.replaceState(null,"",location.pathname+location.search); }
   catch(e){ location.hash=""; }
 }
 
@@ -2316,8 +2418,9 @@ if(!configured()){
     getRedirectResult(auth).catch(e=>console.error(e));
     onAuthStateChanged(auth,u=>{
       user=u;
-      if(u) loadUserHouses();
-      else { stopSync(); houseId=null; houseMeta=null; screenLogin(); }
+      if(u){ setLocalPref(false); loadUserHouses(); }
+      else { stopSync(); houseId=null; houseMeta=null;
+             if(wantsLocal()) startLocal(true); else screenLogin(); }
     });
   }catch(e){
     console.error(e);
